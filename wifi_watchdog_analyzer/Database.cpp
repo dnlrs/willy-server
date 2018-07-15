@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "Database.h"
 #include <iostream>
 #include <fstream>
@@ -14,10 +15,7 @@ Database::Database(string s, int n)
 	{
 		cerr << sqlite3_errmsg(db);
 	}
-	else
-	{
-		cout << "Connessione stabilita";
-	}
+
 	data = db;
 	dispositivi = n;
 	
