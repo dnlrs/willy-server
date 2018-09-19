@@ -13,7 +13,7 @@
 
 /*
  * The dealer is the one who is in charge to handle the connection with the boards when the game starts
- * and whenever issues coming. Is the one who hold the listening Socket
+ * and whenever issues coming. Is the one who holds the listening Socket
  */
 class Dealer
 {
