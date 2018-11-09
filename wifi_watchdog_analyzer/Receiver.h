@@ -21,8 +21,7 @@ using namespace std;
 class Receiver
 {
 public:
-	Receiver() : sock(INVALID_SOCKET) {}
-	Receiver(mac_t mac, double x, double y) : loc(x, y), mac(mac), sock(INVALID_SOCKET) {}
+	Receiver(mac_t mac, double x, double y) : loc(x, y), mac(mac), sock(INVALID_SOCKET), in_error(false) {}
 	~Receiver();
 	mac_t m_mac() const { return this->mac; }
 	Point2d m_loc() const { return this->loc; }
@@ -38,6 +37,7 @@ private:
 	mac_t mac;
 	Point2d loc;
 	SOCKET sock; /* socket for this receiver */
+	boolean in_error; // Has this receiver raised an exception ?
 	void set_sock(const SOCKET& s) { this->sock = s; }
 
 	friend class Dealer; /* the dealer can access the set_sock to fix the socket in case of malfunctions */

@@ -13,18 +13,18 @@
 
 /*
  * The dealer is the one who is in charge to handle the connection with the boards when the game starts
- * and whenever issues coming. Is the one who holds the listening Socket
+ * and whenever issues coming. Is the one who holds the listening Sockets
  */
 class Dealer
 {
 public:
 	Dealer(vector<Receiver>& receivers) : listenSocket(INVALID_SOCKET), recvs(receivers) {}
 	~Dealer() { closesocket(listenSocket); }
-	// it setup the listenSocket for the server
-	void setup_listening();
+	// it setups the listenSocket for the server
+	void setup_listeningS();
 	// it waits for all the boards, accept their connection requests and initialize each receiver's socket
-	void setup_all();
-	// check if the ip belongs to one of the expected boards
+	void connect_to_all();
+	// checks if the ip belongs to one of the expected boards
 	int check_if_valid_board(const u_long& ip, const PMIB_IPNET_TABLE2& arpTable, const vector<Receiver>& receivers, const size_t nrecv);
 	// it tries to reconnect to a specific receiver
 	void reconnecting(Receiver& r);

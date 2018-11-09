@@ -2,7 +2,8 @@
 #include "Dealer.h"
 
 
-void Dealer::setup_listening()
+
+void Dealer::setup_listeningS()
 {
 	stringstream fail;
 	//----------------------
@@ -40,7 +41,7 @@ void Dealer::setup_listening()
 	}
 }
 
-void Dealer::setup_all()
+void Dealer::connect_to_all()
 {
 	int iResult;
 	stringstream fail;
