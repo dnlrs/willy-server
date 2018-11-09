@@ -25,7 +25,7 @@ void Conf::operator() ()
 	/*  read the next receiver */
 	string s;
 	getline(file, s, ' ');
-	for (size_t i = 0, j = 0; i < s.size() && j < MAC_BYTES; i += 3, j++)
+	for (size_t i = 0, j = 0; i < s.size() && j < MAC_LENGTH; i += 3, j++)
 		this->mac_addr.raw_mac[j] = std::stoi(s.substr(i, 2), NULL, 16);
 	file >> this->curr_x;
 	file >> this->curr_y;

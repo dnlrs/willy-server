@@ -26,10 +26,9 @@ typedef struct
 	int rssi;
 	int sequence_ctrl;
 	int timestamp;
-	int ssid_length;
 	mac_t mac_addr;
-	string ssid;
-	string hash;
+	std::string ssid;
+	std::string hash;
 } PACKET_T;
 
 
@@ -139,5 +138,5 @@ PACKET_T inline deserialize(char *buf) {
 	pack.timestamp = timestamp;
 	pack.hash = hash;
 
-
+	return pack;
 }

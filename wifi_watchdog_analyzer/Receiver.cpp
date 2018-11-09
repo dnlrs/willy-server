@@ -14,6 +14,7 @@ Receiver::~Receiver()
 PACKET_T Receiver::operator() ()
 {
 	char* recv_buff;
+	recv_buff = (char *)malloc(sizeof(PACKET_T));
 	SSIZE_T bytes;
 	string fail = string("recv() failed");
 	bytes = recv(this->sock, recv_buff, sizeof(PACKET_T), 0);
