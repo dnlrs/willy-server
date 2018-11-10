@@ -1,2 +1,17 @@
 
-wifi_analyzer/\.vs/
+
+#ignore the database
+database.db
+
+#ignore Visual Studio project files
+.vs
+
+*.sln
+*.vcxproj
+*.vcxproj.*
+
+[Dd]ebug
+[Rr]elease
+[Bb]in
+[Oo]bj
+[Ll]og
