@@ -18,7 +18,7 @@
 class Dealer
 {
 public:
-	Dealer(vector<Receiver>& receivers) : listenSocket(INVALID_SOCKET), recvs(receivers) {}
+	Dealer(vector<Receiver>& receivers) : listenSocket(INVALID_SOCKET), recvs(receivers), fatal_error(false) {}
 	~Dealer() { closesocket(listenSocket); }
 	// it setups the listenSocket for the server
 	void setup_listeningS();
