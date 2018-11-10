@@ -1,5 +1,5 @@
-#include "Database.h"
 #include "stdafx.h"
+#include "Database.h"
 #include "packet.h"
 #include <iostream>
 #include <cstdint> /* for uint64_t */

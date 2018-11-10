@@ -66,7 +66,7 @@ public:
 
     /*! Sets the number of available anchors
      */
-    void Database::set_anchors_number(int anchorsNr);
+    void set_anchors_number(int anchorsNr);
     
     /*! Initialize the database connection and necessary tables.
      * 
