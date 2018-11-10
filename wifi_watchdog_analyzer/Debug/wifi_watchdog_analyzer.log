@@ -1,5 +1,8 @@
-﻿  Conf.cpp
+﻿  stdafx.cpp
+  Conf.cpp
+  Database.cpp
   Dealer.cpp
+  Point2d.cpp
   Receiver.cpp
   wifi_watchdog_analyzer.cpp
   Generating Code...
