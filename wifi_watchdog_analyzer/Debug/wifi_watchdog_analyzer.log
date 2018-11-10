@@ -1,9 +1,0 @@
-﻿  stdafx.cpp
-  Conf.cpp
-  Database.cpp
-  Dealer.cpp
-  Point2d.cpp
-  Receiver.cpp
-  wifi_watchdog_analyzer.cpp
-  Generating Code...
-  wifi_watchdog_analyzer.vcxproj -> C:\Users\matte\Progetto-PDS\wifi_watchdog_analyzer\Debug\wifi_watchdog_analyzer.exe
