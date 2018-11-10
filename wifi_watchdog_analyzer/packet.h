@@ -6,9 +6,10 @@
  */
 
 
-#include<cstdint> /* for uint64_t */
+#include <cstdint> /* for uint64_t */
 #include <string>
 #include <sstream>
+#include <Windows.h>
 
 #define MAC_LENGTH 6
 #define MD5_HASH_LENGTH 32

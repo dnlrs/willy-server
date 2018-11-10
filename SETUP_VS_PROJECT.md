@@ -2,6 +2,8 @@
 How to setup Visual Studio project
 ==================================
 
+// ignore these steps for now
+
  1. Clone repo into a folder which will be the "working directory"
  2. Open Visual Studio
  3. File -> New -> Project from existing code
@@ -15,7 +17,7 @@ How to setup Visual Studio project
  4. In the "Solution Explorer" window (View->Solution Explorer), right click on the project 
     (wifi_watchdog_analyzer) and select "Properties"
  5. Under "Configuration Properties -> General" change the "Windows SDK Version" from 8.1 to 10.0.17...; then Apply
- 6. Under "C/C++ -> General" add "$(ProjectDir)include;" to " Additional Include Directories"; then Apply
+// 6. Under "C/C++ -> General" add "$(ProjectDir)include;" to " Additional Include Directories"; then Apply
  7. Under "Linker -> General" add "$(ProjectDir)lib;" to "Additional library Directories"; then Apply
  8. Under "Linker -> Input" add "sqlite3.lib;iphlpapi.lib;" right before "%(AdditionalDependencies)"; then OK
  

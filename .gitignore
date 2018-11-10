@@ -1,7 +1,9 @@
-
+# 
+# NOTE: if you have any other project file in any different location, please 
+#       add them to a .gitignore file
 
 #ignore the database
-database.db
+*database.db
 
 #ignore Visual Studio project files
 .vs
