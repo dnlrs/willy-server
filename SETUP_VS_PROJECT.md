@@ -16,13 +16,19 @@ How to setup Visual Studio project
 	e. Leave default settings, then Finish
  4. In the "Solution Explorer" window (View->Solution Explorer), right click on the project 
     (wifi_watchdog_analyzer) and select "Properties"
- 5. Under "Configuration Properties -> General" change the "Windows SDK Version" from 8.1 to 10.0.17...; then Apply
-// 6. Under "C/C++ -> General" add "$(ProjectDir)include;" to " Additional Include Directories"; then Apply
- 7. Under "Linker -> General" add "$(ProjectDir)lib;" to "Additional library Directories"; then Apply
- 8. Under "Linker -> Input" add "sqlite3.lib;iphlpapi.lib;" right before "%(AdditionalDependencies)"; then OK
- 
+ 5. Under "Configuration Properties -> General" change the "Windows SDK Version" to your latest installed 
+    version (8.1 or 10.0.17...); then Apply
+ 6. Select View -> Property Manager; in the new window right click on "Debug | x64" -> "Add existing 
+    Property Sheet..." nad brwose and select the "VS_project_config_x64.props" file in the working directory
+ 7. (optional until final version) Repeat for "Release | x64"
+ 8. Make sure you are building and debugging for x64 architecture 
+    (Build -> configuration Manager... -> set Active Solution Platorom to "x64")
+
 You may now build and run the application.
- 
+
+NOTE: to update common project properties go to  View -> Property Manager -> "Debug | x64" double click on
+      "VS_project_config_x64.props", edit necessary properties, click OK and then in Property Manager
+      again select "VS_project_config_x64.props" and save it.
  
 
 How to get the sqlite3 library (only for reference, not to be done)
