@@ -2,7 +2,7 @@
 #include "Conf.h"
 
 
-Conf::Conf(const char* filename)
+Conf::Conf(const string filename)
 {
 	/* open file & read receiver num */
 	this->finished = false;

@@ -20,7 +20,7 @@ class Conf
 {
 public:
 	Conf() : receiver_n(0), actual_recv(0) {}
-	Conf(const char* filename); /* open the file and reads once '#receivers' */
+	Conf(const string filename); /* open the file and reads once '#receivers' */
 	~Conf();
 	void operator() (); /* reads parameter of the next board */
 	int m_recvn() const { return this->receiver_n; }
