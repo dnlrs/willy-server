@@ -23,10 +23,11 @@ union mac_t
 
 typedef struct
 {
-	int channel;
-	int rssi;
-	int sequence_ctrl;
-	int timestamp;
+	uint32_t channel;
+	uint32_t rssi;
+	uint32_t sequence_ctrl;
+	uint32_t timestamp;
+	uint32_t ssid_lenght;
 	mac_t mac_addr;
 	std::string ssid;
 	std::string hash;

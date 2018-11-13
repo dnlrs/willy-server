@@ -113,7 +113,7 @@ int Dealer::check_if_valid_board(const u_long& ip, const PMIB_IPNET_TABLE2& arpT
 				if (receivers[rentry].m_mac().raw_mac[currbyte] != (unsigned char)arpTable->Table[currentry].PhysicalAddress[currbyte])
 					break;
 			if (currbyte == 6)  // correspondant board was found
-				return rentry;
+				return (int)rentry;
 		}
 	}
 	return -1;
