@@ -13,11 +13,10 @@ Receiver::~Receiver()
 /* Define a data id to make possible a resend in case of error (??)*/
 PACKET_T Receiver::operator() ()
 {
-	char* recv_buff;
-	recv_buff = (char *)malloc(sizeof(PACKET_T));
+	char recv_buff[BOARD_PACK_DIM];
 	SSIZE_T bytes;
 	string fail = string("recv() failed");
-	bytes = recv(this->sock, recv_buff, sizeof(PACKET_T), 0);
+	bytes = recv(this->sock, recv_buff, BOARD_PACK_DIM, 0);
 	if (bytes == 0) //connection closed by peer
 		throw Recv_exception(fail.append(": connection closed by peer"));
 	else if (bytes < 0) //invalid socket or connection closed

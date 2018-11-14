@@ -14,6 +14,7 @@
 #define MAC_LENGTH 6
 #define MD5_HASH_LENGTH 32
 #define MAX_SSID_LENGTH 32
+#define BOARD_PACK_DIM 84
 
 union mac_t
 {
@@ -79,16 +80,16 @@ inline void UnixTimeToSystemTime(time_t t, LPSYSTEMTIME pst)
 
 
 PACKET_T inline deserialize(char *buf) {
-	int channel;
-	int rssi;
-	int sequence_ctrl;
-	int timestamp;
-	int ssid_length;
+	uint32_t channel;
+	uint32_t rssi;
+	uint32_t sequence_ctrl;
+	uint32_t timestamp;
+	uint32_t ssid_length;
 	char mac_addr[MAC_LENGTH];
 	char ssid[MAX_SSID_LENGTH + 1];
 	char hash[MD5_HASH_LENGTH + 1];
 
-	int *buf_int = (int *)buf;
+	uint32_t *buf_int = (uint32_t *)buf;
 	channel = ntohl(*buf_int); //CHANNEL
 	buf_int++;
 	rssi = ntohl(*buf_int); //RSSI
@@ -102,18 +103,18 @@ PACKET_T inline deserialize(char *buf) {
 
 	char *buf_c = (char *)buf_int;
 
-	for (int i = 0; i < MAC_LENGTH; i++) {
+	for (uint32_t i = 0; i < MAC_LENGTH; i++) {
 		mac_addr[i] = *buf_c;
 		buf_c++;
 	}
 
-	for (int i = 0; i < MD5_HASH_LENGTH; i++) {
+	for (uint32_t i = 0; i < MD5_HASH_LENGTH; i++) {
 		hash[i] = *buf_c;
 		buf_c++;
 	}
 	hash[MD5_HASH_LENGTH] = '\0';
 
-	for (int i = 0; i < ssid_length; i++) {
+	for (uint32_t i = 0; i < ssid_length; i++) {
 		ssid[i] = *buf_c;
 		buf_c++;
 	}
