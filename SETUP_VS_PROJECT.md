@@ -14,17 +14,16 @@ How to setup Visual Studio project
 	c. Use Visual Studio -> Project type: "Console application project", leave the rest as is, then Next
 	d. Leave default settings, then Next
 	e. Leave default settings, then Finish
+	f. Now you will have a folder named 'wifi_watchdog analyzer'. Move the .sln in the GIT directory and the .vcxproj files into the src folder
+	g. Modify with Notepad++ the .sln and modify the Project{xxxxx-xxx} row by changing the folder to src on the second argument
  4. In the "Solution Explorer" window (View->Solution Explorer), right click on the project 
     (wifi_watchdog_analyzer) and select "Properties"
  5. Under "Configuration Properties -> General" change the "Windows SDK Version" from 8.1 to 10.0.17...; then Apply
 // 6. Under "C/C++ -> General" add "$(ProjectDir)include;" to " Additional Include Directories"; then Apply
  7. Under "Linker -> General" add "$(ProjectDir)lib;" to "Additional library Directories"; then Apply
- //8. Under "Linker -> Input" add "sqlite3.lib;iphlpapi.lib;" right before "%(AdditionalDependencies)"; then OK
-		(This last step is not mandatory since all the needed libs are linked through the pragma comment in the main file)
  
 You may now build and run the application.
- 
- (if the linker cannot find the sql3.dll press Alt+F7, then Debugging and modify the Working Directory to '$ProjectDir..\' )
+ ++ (if the linker cannot find the sql3.dll press Alt+F7, then Debugging and modify the Working Directory to '$ProjectDir..\' ) ++
 
 How to get the sqlite3 library (only for reference, not to be done)
 ===================================================================
