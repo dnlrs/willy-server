@@ -25,6 +25,7 @@ How to setup Visual Studio project
 You may now build and run the application.
  
  (if the linker cannot find the sql3.dll press Alt+F7, then Debugging and modify the Working Directory to '$ProjectDir..\' )
+ (if the project cannot be loaded open with notepad++ the .sln and modify the Project{xxxxx-xxx} row by changing the folder to src on the second argument)
 
 How to get the sqlite3 library (only for reference, not to be done)
 ===================================================================
