@@ -18,6 +18,7 @@ How to setup Visual Studio project
 	g. Modify with Notepad++ the .sln and modify the Project{xxxxx-xxx} row by changing the folder to src on the second argument
  4. In the "Solution Explorer" window (View->Solution Explorer), right click on the project 
     (wifi_watchdog_analyzer) and select "Properties"
+<<<<<<< HEAD
  5. Under "Configuration Properties -> General" change the "Windows SDK Version" to your latest installed 
     version (8.1 or 10.0.17...); then Apply
  6. Select View -> Property Manager; in the new window right click on "Debug | x64" -> "Add existing 
@@ -34,6 +35,14 @@ NOTE: to update common project properties go to  View -> Property Manager -> "De
 
 NOTE: if the linker cannot find the sqlite3.dll press Alt+F7, then Debugging and modify the Working Directory to '$ProjectDir..\';
       this may happen if the Visual Studio project is created in a folder different from the one (in our case) containing the ".git" folder. 
+=======
+ 5. Under "Configuration Properties -> General" change the "Windows SDK Version" from 8.1 to 10.0.17...; then Apply
+// 6. Under "C/C++ -> General" add "$(ProjectDir)include;" to " Additional Include Directories"; then Apply
+ 7. Under "Linker -> General" add "$(ProjectDir)lib;" to "Additional library Directories"; then Apply
+ 
+You may now build and run the application.
+ ++ (if the linker cannot find the sql3.dll press Alt+F7, then Debugging and modify the Working Directory to '$ProjectDir..\' ) ++
+>>>>>>> 80ef4f970a55d468007728746b2a8dfbeff46e5c
 
 How to get the sqlite3 library (only for reference, not to be done)
 ===================================================================
