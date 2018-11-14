@@ -1,4 +1,100 @@
 
+## Data structures
+
+NOTE: each anchor has an ID [0, 1, ...]
+
+#### `received_data` 
+
+```
+	[ MAC, timestamp, n_rssi_received, [ rssi ], packet_signature ]
+```
+
+ - n_rssi_received is the length of the list with the RSSIs received from anchors
+ - packet signature is related to the MAC, and is useful to attack mac randomization; is composed by different fields in the probe request
+ - [ rssi ] is a list with the measurements received from all anchors, in position i will be the RSSI received from anchor i
+ 
+Overall:
+ - `received_data` is a map containing for each MAC, for each timestamp interval (1 second) the measurements from all the anchors.
+ - shared among all Receivers:
+ 
+##### when a Receiver receives a packet:
+
+```C
+	id = anchor_id;
+	if ( !received_data.contains(MAC) ) {
+	
+		received_data.push(MAX, normalized_timestamp, 1, rssi[id] = RSSI, packet_signature/blob);
+	
+	} else {
+		
+		entry = received_data.get(MAC, nomalized_timestamp);
+		entry.n_rssi_received++;
+		entry.rssi[id] = RSSI;
+		
+		if ( entry.n_rssi_received == N_ANCHORS ) {
+			localization_buffer.push(entry);
+			localization_thread.notify();
+			received_data.delete(MAC, timestamp);
+			}
+	}
+
+```
+
+#### Localization thread (and localization_buffer)
+
+ - the localization thread wakes up when has data to process and goes to sleep when `localizatin_buffer` is empty
+ 
+##### when localization thread is awaken:
+
+```C
+
+	while ( 1 ) {
+	
+		while ( !localization_buffer.is_empty() ) {
+			entry = localization_buffer.pop();
+			point = triangolarization(entry.rssi, anchors_positions);
+			db.devices.add(entry.MAC, entry.timestamp, point.x, point.y);
+			
+			if ( first_time_seen(entry.MAC) )
+				db.signatures.add(entry.MAC, entry.packet_signature);
+		}
+		
+		sleep();
+	}
+
+```
+
+#### Database
+
+Only 2 tables may be enough for everything.
+```SQL
+	signatures(MAC, packet_signature);
+	devices(MAC, timestamp, X, Y);
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 **Edit a file, create a new file, and clone from Bitbucket in under 2 minutes**
 
 When you're done, you can delete the content in this README and update the file with details for others getting started with your repository.
