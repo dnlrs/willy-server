@@ -30,6 +30,7 @@ PACKET_T Receiver::operator() ()
 		cout << "memory error" << endl;
 		exit(-1);
 	}
+
 	cout << "PACK SIZE: " << pack_size << endl;
 	bytes = recv(this->sock, recv_buff, pack_size, 0);
 	if (bytes == 0) //connection closed by peer
