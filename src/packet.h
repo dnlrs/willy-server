@@ -16,7 +16,6 @@
 #define MAC_LENGTH 6
 #define MD5_HASH_LENGTH 32
 #define MAX_SSID_LENGTH 32
-#define BOARD_PACK_DIM 84
 
 
 
@@ -75,7 +74,7 @@ inline std::string timetos(struct tm time/*SYSTEMTIME time*/)
 inline struct tm epochTotm(const time_t rawtime)
 {
 	struct tm ptm;
-	gmtime_s(&ptm, &rawtime);
+	localtime_s(&ptm, &rawtime);
 	return ptm;
 }
 

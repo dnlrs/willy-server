@@ -93,7 +93,11 @@ void Dealer::connect_to_all()
 			continue;
 		}
 		this->recvs[iResult].set_sock(acceptSocket);
-		wprintf(L"Receiver connected.\n");
+		uint32_t ack;
+		size_t bytes = send(acceptSocket, (char *) &ack, sizeof(uint32_t), 0);
+		if (bytes < 0)
+			exit(-1);
+		wprintf(L"Receiver connected and started.\n");
 		checkedboard++;
 
 	}
