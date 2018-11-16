@@ -35,6 +35,7 @@ NOTE: to update common project properties go to  View -> Property Manager -> "De
 NOTE: if the linker cannot find the sqlite3.dll press Alt+F7, then Debugging and modify the Working Directory to '$ProjectDir..\';
       this may happen if the Visual Studio project is created in a folder different from the one (in our case) containing the ".git" folder. 
 
+NOTE: to correctly connect client and server you should turn off firewall on public networks
 	  
 How to get the sqlite3 library (only for reference, not to be done)
 ===================================================================

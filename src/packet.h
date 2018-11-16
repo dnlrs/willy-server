@@ -7,14 +7,18 @@
 
 
 #include <cstdint> /* for uint64_t */
-#include <string>
 #include <sstream>
 #include <Windows.h>
+#include <time.h>
+#include <vector>
+
 
 #define MAC_LENGTH 6
 #define MD5_HASH_LENGTH 32
 #define MAX_SSID_LENGTH 32
 #define BOARD_PACK_DIM 84
+
+
 
 union mac_t
 {
@@ -25,7 +29,7 @@ union mac_t
 typedef struct
 {
 	uint32_t channel;
-	uint32_t rssi;
+	int32_t rssi;
 	uint32_t sequence_ctrl;
 	uint32_t timestamp;
 	uint32_t ssid_lenght;
@@ -50,12 +54,29 @@ inline std::string mactos(mac_t macaddr)
 	return ss.str();
 }
 
-inline std::string timetos(SYSTEMTIME time)
+inline std::string timetos(struct tm time/*SYSTEMTIME time*/)
 {
-	std::string s;
+	/*std::string s;
 	s = std::to_string(time.wDay) + '/' + std::to_string(time.wMonth) + '/' + std::to_string(time.wYear) + " - " + std::to_string(time.wHour)
 		+ ':' + std::to_string(time.wMinute) + ':' + std::to_string(time.wSecond);
+	return s;*/
+	std::string s;
+	std::vector<std::string> days(7);
+	std::vector<std::string> months(12);
+	days[0] = "Sunday"; days[1] = "Monday"; days[2] = "Tuesday"; days[3] = "Wednesday"; days[4] = "Thursday"; days[5] = "Friday"; days[6] = "Saturday";
+	months[0] = "January"; months[1] = "February"; months[2] = "March"; months[3] = "April"; months[4] = "May"; months[5] = "June"; months[6] = "July";
+	months[7] = "August"; months[8] = "September"; months[9] = "October"; months[10] = "November"; months[11] = "December";
+	s += days[time.tm_wday] + ", " + months[time.tm_mon] + " " + std::to_string(time.tm_mday) + ", " + std::to_string(1900+time.tm_year)
+		+ " " + std::to_string(time.tm_hour) + ":" + std::to_string(time.tm_min) + ":" + std::to_string(time.tm_sec);
 	return s;
+
+}
+
+inline struct tm epochTotm(const time_t rawtime)
+{
+	struct tm ptm;
+	gmtime_s(&ptm, &rawtime);
+	return ptm;
 }
 
 
@@ -120,7 +141,7 @@ PACKET_T inline deserialize(char *buf) {
 	}
 	ssid[ssid_length] = '\0';
 
-	printf("CH=%d, RSSI=%02d, MAC=%02x:%02x:%02x:%02x:%02x:%02x, SSID=%s, SEQ=%d, TIMESTAMP: %d, HASH=%s\n",
+	/*printf("CH=%d, RSSI=%02d, MAC=%02x:%02x:%02x:%02x:%02x:%02x, SSID=%s, SEQ=%d, TIMESTAMP: %d, HASH=%s\n",
 		channel,
 		rssi,
 		(uint8_t)mac_addr[0], (uint8_t)mac_addr[1], (uint8_t)mac_addr[2],
@@ -129,7 +150,7 @@ PACKET_T inline deserialize(char *buf) {
 		sequence_ctrl,
 		timestamp,
 		hash
-	);
+	);*/
 
 	PACKET_T pack;
 	pack.channel = channel;
