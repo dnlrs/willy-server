@@ -37,6 +37,12 @@ PACKET_T Receiver::operator() ()
 	else if (bytes < 0) //invalid socket or connection closed
 		throw Sock_exception(fail);
 
+	bytes = recv(this->sock, recv_buff, pack_size, 0);
+	if (bytes == 0) //connection closed by peer
+		throw Recv_exception(fail.append(": connection closed by peer"));
+	else if (bytes < 0) //invalid socket or connection closed
+		throw Sock_exception(fail);
+
 	PACKET_T pack = deserialize(recv_buff);
 	return pack;
 }
