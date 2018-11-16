@@ -31,7 +31,6 @@ PACKET_T Receiver::operator() ()
 		exit(-1);
 	}
 
-	cout << "PACK SIZE: " << pack_size << endl;
 	bytes = recv(this->sock, recv_buff, pack_size, 0);
 	if (bytes == 0) //connection closed by peer
 		throw Recv_exception(fail.append(": connection closed by peer"));
@@ -42,13 +41,12 @@ PACKET_T Receiver::operator() ()
 	return pack;
 }
 
-int Receiver::total_packet()
+boolean Receiver::has_valid_socket()
 {
-	int numpack;
-	SSIZE_T byte;
-	byte = recv(this->sock, (char*)&numpack, sizeof(int), 0);
-	if (byte == -1)
-		wprintf(L"recv() failed with error: %ld\n", WSAGetLastError());
-	numpack = ntohs(numpack);
-	return numpack;
+	int err = 0;
+	socklen_t size = sizeof(err);
+	int check = getsockopt(this->sock, SOL_SOCKET, SO_ERROR, (char *) &err, &size);
+	if (check != 0)
+		return false;
+	return true;
 }

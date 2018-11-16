@@ -30,7 +30,7 @@ void Conf::operator() ()
 	file >> this->curr_x;
 	file >> this->curr_y;
 	//debugging prints
-	cout << mactos(this->mac_addr) << " " << this->curr_x << " " << this->curr_y << endl;
+	cout << "\t" << mactos(this->mac_addr) << "\tX:" << this->curr_x << " Y:" << this->curr_y << endl;
 
 	this->actual_recv++;
 	this->next_line();   // in case of eof it stops to extracting

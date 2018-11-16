@@ -5,6 +5,7 @@
 #include <sstream>
 #include <map>
 #include <memory>
+#include <mutex>
 #include "Net_exceptions.h"
 #include "Receiver.h"
 #include "packet.h"
@@ -18,7 +19,7 @@
 class Dealer
 {
 public:
-	Dealer(vector<Receiver>& receivers) : listenSocket(INVALID_SOCKET), recvs(receivers), fatal_error(false) {}
+	Dealer(vector<Receiver>& receivers) : listenSocket(INVALID_SOCKET), recvs(receivers){}
 	~Dealer() { closesocket(listenSocket); }
 	// it setups the listenSocket for the server
 	void setup_listeningS();
@@ -26,19 +27,14 @@ public:
 	void connect_to_all();
 	// checks if the ip belongs to one of the expected boards
 	int check_if_valid_board(const u_long& ip, const PMIB_IPNET_TABLE2& arpTable, const vector<Receiver>& receivers, const size_t nrecv);
-	// it tries to reconnect to a specific receiver
-	void reconnecting(Receiver& r);
-	// sends the ACK to all the boards and set the lastSynch with the actual local time
-	void synch();
-	// it returns the local time + offset (in seconds) in unix time
-	time_t synchToUnix(UINT16 off);
+	//listen on the listening socket for incoming connection requests. It grants the access only for authorized devices
+	void accept_incoming_req();
+
+	mutex& getprintMtx() { return this->printMtx; }
 
 private:
 	SOCKET listenSocket;
-	map<string, SOCKET> pendingRequests; // <board's mac, socket>
 	vector<Receiver>& recvs;
-	boolean fatal_error; // if something irreparable happens
-	SYSTEMTIME lastSynch;
-	LONGLONG FileTime_to_POSIX(FILETIME ft);
+	mutex printMtx;
 };
 

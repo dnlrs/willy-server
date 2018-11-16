@@ -31,8 +31,8 @@ public:
 	// receives a struct packet from this receiver 
 	PACKET_T operator() ();
 	bool operator==(Receiver r) { return this->mac.compacted_mac == r.mac.compacted_mac; }
-	// receives the tot number of packet this receiver has to send
-	int total_packet();
+	// check if the socket is still connected
+	boolean has_valid_socket();
 private:
 	mac_t mac;
 	Point2d loc;

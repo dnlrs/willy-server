@@ -4,12 +4,12 @@
 
 using namespace std;
 
-
+//invalid socket: when recv() is locked and the dealer fixes the socket, this exception is raised
 class Sock_exception : public std::exception
 {
 public:
 	Sock_exception() {
-		this->errmsg = string("---- Sock_exception raised - ");
+		this->errmsg = string("--[EXCEPTION]-- +++ Sock_exception raised - ");
 		this->errcode = WSAGetLastError(); 
 	}
 
@@ -31,11 +31,13 @@ private:
 	int errcode;
 };
 
+
+// this exception it is raised when the connection is closed by the peer
 class Recv_exception
 {
 public:
 	Recv_exception() {
-		this->errmsg = string("---- Recv_exception raised - ");
+		this->errmsg = string("--[EXCEPTION]-- +++ Recv_exception raised - ");
 	}
 
 	Recv_exception(const string &msg) : Recv_exception() {
