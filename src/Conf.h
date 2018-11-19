@@ -1,9 +1,8 @@
 #pragma once
 #include <string>
 #include <fstream>
-#include <Winsock2.h>
 #include <iostream>
-#include "packet.h"
+#include "packet.h" //for MAC_LENGTH define
 #include "Conf_exceptions.h"
 
 /* This class read the conf file token by token (receiver by receiver) */

@@ -1,8 +1,5 @@
 #pragma once
 
-#include <sstream>
-#include <thread>
-
 using namespace std;
 
 class Conf_exception : public std::exception

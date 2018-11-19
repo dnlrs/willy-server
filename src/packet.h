@@ -8,7 +8,7 @@
 
 #include <cstdint> /* for uint64_t */
 #include <sstream>
-#include <Windows.h>
+#include <winsock2.h>
 #include <time.h>
 #include <vector>
 
@@ -22,7 +22,7 @@
 union mac_t
 {
 	unsigned char raw_mac[MAC_LENGTH];
-	UINT64 compacted_mac : 48;
+	uint64_t compacted_mac : 48;
 };
 
 typedef struct
@@ -53,12 +53,8 @@ inline std::string mactos(mac_t macaddr)
 	return ss.str();
 }
 
-inline std::string timetos(struct tm time/*SYSTEMTIME time*/)
+inline std::string timetos(struct tm time)
 {
-	/*std::string s;
-	s = std::to_string(time.wDay) + '/' + std::to_string(time.wMonth) + '/' + std::to_string(time.wYear) + " - " + std::to_string(time.wHour)
-		+ ':' + std::to_string(time.wMinute) + ':' + std::to_string(time.wSecond);
-	return s;*/
 	std::string s;
 	std::vector<std::string> days(7);
 	std::vector<std::string> months(12);
@@ -77,27 +73,6 @@ inline struct tm epochTotm(const time_t rawtime)
 	localtime_s(&ptm, &rawtime);
 	return ptm;
 }
-
-
-inline void UnixTimeToFileTime(time_t t, LPFILETIME pft)
-{
-	// Note that LONGLONG is a 64-bit value
-	LONGLONG ll;
-
-	ll = Int32x32To64(t, 10000000) + 116444736000000000;
-	pft->dwLowDateTime = (DWORD)ll;
-	pft->dwHighDateTime = ll >> 32;
-}
-
-
-inline void UnixTimeToSystemTime(time_t t, LPSYSTEMTIME pst)
-{
-	FILETIME ft;
-
-	UnixTimeToFileTime(t, &ft);
-	FileTimeToSystemTime(&ft, pst);
-}
-
 
 PACKET_T inline deserialize(char *buf) {
 	uint32_t channel;
