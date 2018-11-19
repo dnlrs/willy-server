@@ -1,11 +1,9 @@
 #pragma once
-#include <vector>
 #include <winsock2.h>
-#include <ws2tcpip.h>
-#include <sstream>
 #include <map>
 #include <memory>
 #include <mutex>
+#include <list>
 #include "Net_exceptions.h"
 #include "Receiver.h"
 #include "packet.h"
@@ -14,12 +12,12 @@
 
 /*
  * The dealer is the one who is in charge to handle the connection with the boards when the game starts
- * and whenever issues coming. Is the one who holds the listening Sockets
+ * and whenever issues coming. Is the one who holds the listening Sockets and all the synchronization tools
  */
 class Dealer
 {
 public:
-	Dealer(vector<Receiver>& receivers) : listenSocket(INVALID_SOCKET), recvs(receivers){}
+	Dealer(vector<Receiver>& receivers) : listenSocket(INVALID_SOCKET), recvs(receivers), fatal_error(false){}
 	~Dealer() { closesocket(listenSocket); }
 	// it setups the listenSocket for the server
 	void setup_listeningS();
@@ -29,12 +27,20 @@ public:
 	int check_if_valid_board(const u_long& ip, const PMIB_IPNET_TABLE2& arpTable, const vector<Receiver>& receivers, const size_t nrecv);
 	//listen on the listening socket for incoming connection requests. It grants the access only for authorized devices
 	void accept_incoming_req();
-
+	//returns the print mutex object
 	mutex& getprintMtx() { return this->printMtx; }
+	//it closes all the receivers socket and notify them to exit. Call it in order to close the server
+	void notify_fatal_err();
+	//it says if fatal_error is set
+	boolean in_err();
+	//closes the listening socket
+	void close_listening() { closesocket(this->listenSocket); }
 
 private:
 	SOCKET listenSocket;
 	vector<Receiver>& recvs;
 	mutex printMtx;
+	mutex fatalErrMtx;
+	boolean fatal_error; //set if one receiver thread is exited
 };
 

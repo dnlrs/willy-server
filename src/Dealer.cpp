@@ -65,9 +65,11 @@ void Dealer::connect_to_all()
 
 	struct sockaddr_in accAddr;
 	socklen_t addrlen;
+	list<uint64_t> guest_list;
+	for (Receiver r : this->recvs)
+		guest_list.push_back(r.m_mac().compacted_mac);
 	size_t missingboards = this->recvs.size();
 	size_t checkedboard = 0;
-
 	while (checkedboard < missingboards)
 	{
 		addrlen = sizeof(struct sockaddr_in);
@@ -86,14 +88,23 @@ void Dealer::connect_to_all()
 			closesocket(acceptSocket);
 			continue;
 		}
+		closesocket(this->recvs[iResult].m_sock()); //close socket to avoid multiple accept to leave multiple opened socket
 		this->recvs[iResult].set_sock(acceptSocket);
 		uint32_t ack = 1;
 		size_t bytes = send(acceptSocket, (char *) &ack, sizeof(uint32_t), 0);
 		if (bytes < 0)
 			exit(-1);
-		cout << "Receiver <" << mactos(this->recvs[iResult].m_mac()) << "> connected and started." << endl;
-		checkedboard++;
 
+		//search for the connected board, if this one were already accepted do not count it as a new checkedboard
+		auto it = std::find(guest_list.begin(), guest_list.end(), this->recvs[iResult].m_mac().compacted_mac);
+		if(it == guest_list.end())
+			cout << "++ Receiver <" << mactos(this->recvs[iResult].m_mac()) << "> reconnected and started. ++" << endl;
+		else
+		{
+			guest_list.erase(it); //remove the new connected board from the guest_list
+			cout << "Receiver <" << mactos(this->recvs[iResult].m_mac()) << "> connected and started." << endl;
+			checkedboard++;
+		}
 	}
 }
 
@@ -101,6 +112,10 @@ void Dealer::accept_incoming_req()
 {
 	int iResult;
 	stringstream fail;
+
+	this->printMtx.lock();
+	cout << "-- [LISTENING THREAD] -- THREAD ID :" << this_thread::get_id() << ": listening thread is active" << endl;
+	this->printMtx.unlock();
 
 	// Create a SOCKET for accepting incoming requests.
 	SOCKET acceptSocket = INVALID_SOCKET;
@@ -111,6 +126,7 @@ void Dealer::accept_incoming_req()
 	PMIB_IPNET_TABLE2 pipTable = NULL;
 	status = GetIpNetTable2(AF_INET, &pipTable);
 	if (status != NO_ERROR) {
+		lock_guard<mutex> lg(this->printMtx);
 		printf("GetIpNetTable for IPv4 table returned error: %ld\n", status);
 		exit(-1); // radical error
 	}
@@ -126,9 +142,14 @@ void Dealer::accept_incoming_req()
 		//clear the structure
 		memset(&accAddr, 0, addrlen);
 		acceptSocket = accept(this->listenSocket, (SOCKADDR *)&accAddr, &addrlen);
-		if (acceptSocket == INVALID_SOCKET) {
-			fail << "accept failed";
-			throw Sock_exception(fail.str());
+		if (acceptSocket == INVALID_SOCKET) 
+		{
+			this->printMtx.lock();
+			cout << "-- [ERROR] -- THREAD ID " << this_thread::get_id() << "Accept failed - Listening thread is closing ...";
+			this->printMtx.unlock();
+			if (!this->in_err())
+				this->notify_fatal_err();
+			return;
 		}
 
 		/* check if this ip corresponds to a valid board and insert the AcceptSocket into the correspondant Receiver object */
@@ -138,18 +159,30 @@ void Dealer::accept_incoming_req()
 			closesocket(acceptSocket);
 			continue;
 		}
-		//close socket to unlock the thread blocked on the recv()
-		closesocket(this->recvs[iResult].m_sock());
+		//sets the new socket
+		SOCKET old_sock = this->recvs[iResult].m_sock();
 		this->recvs[iResult].set_sock(acceptSocket);
+		//closes socket to unlock the thread blocked on the recv()
+		closesocket(old_sock);
+		
 		uint32_t ack = 1;
 		size_t bytes = send(acceptSocket, (char *)&ack, sizeof(uint32_t), 0);
-		if (bytes < 0)
-			exit(-1);
-		cout << "--[RECONNECTION]-- " << "Receiver <" << mactos(this->recvs[iResult].m_mac()) << "> reconnected and started." << endl;
+		if (bytes <= 0)
+		{
+			this->printMtx.lock();
+			cout << "-- [ERROR] -- THREAD ID " << this_thread::get_id() << "Ack sending failed - Listening thread is closing ...";
+			this->printMtx.unlock();
+			if (!this->in_err())
+				this->notify_fatal_err();
+			return;
+		}
+		this->printMtx.lock();
+		cout << "-- [RECONNECTION] -- THREAD ID " << this_thread::get_id() << endl
+			<< "\t\tReceiver <" << mactos(this->recvs[iResult].m_mac()) << "> reconnected and started." << endl;
+		this->printMtx.unlock();
 	}
 
 }
-
 
 int Dealer::check_if_valid_board(const u_long& ip, const PMIB_IPNET_TABLE2& arpTable, const vector<Receiver>& receivers, const size_t nrecv)
 {
@@ -171,3 +204,19 @@ int Dealer::check_if_valid_board(const u_long& ip, const PMIB_IPNET_TABLE2& arpT
 	return -1;
 }
 
+void Dealer::notify_fatal_err()
+{
+	lock_guard<mutex> lg(this->fatalErrMtx);
+	if (this->fatal_error)
+		return;
+	this->fatal_error = true;
+	//close all receivers socket to unlock them from the recv(). The closesocket() is blocked until all the incoming data has been received
+	for (Receiver r : this->recvs)
+		closesocket(r.m_sock());
+}
+
+boolean Dealer::in_err()
+{
+	lock_guard<mutex> lg(this->fatalErrMtx);
+	return this->fatal_error;
+}

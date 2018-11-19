@@ -27,7 +27,6 @@ public:
 	Point2d m_loc() const { return this->loc; }
 	double m_x() const { return this->loc.m_x(); }
 	double m_y() const { return this->loc.m_y(); }
-	SOCKET m_sock() const { return this->sock; };
 	// receives a struct packet from this receiver 
 	PACKET_T operator() ();
 	bool operator==(Receiver r) { return this->mac.compacted_mac == r.mac.compacted_mac; }
@@ -39,6 +38,7 @@ private:
 	SOCKET sock; /* socket for this receiver */
 	boolean in_error; // Has this receiver raised an exception ?
 	void set_sock(const SOCKET& s) { this->sock = s; }
+	SOCKET m_sock() const { return this->sock; };
 
 	friend class Dealer; /* the dealer can access the set_sock to fix the socket in case of malfunctions */
 };
