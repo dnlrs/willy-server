@@ -25,7 +25,8 @@ chartview::chartview(QWidget *parent) :
 {
     chartview::interval = time (NULL);
     slider=false;
-    beginnig = time(NULL);
+    stat=false;
+    beginning = time(NULL);
     QTextStream out(stdout);
     float maxX=0;
     float maxY=0;
@@ -135,12 +136,20 @@ void chartview::updateChart(){
     QTextStream out(stdout);
     QString query;
     if(!slider){
-        time_t now = time(NULL);
-        query = "SELECT * FROM positions";
-                        //WHERE timestamp<" +
-                        //QString::number(now) + " AND timestamp>" +
-                        //QString::number(ChartView::beginning);
-        chartview::interval= now;
+        if(stat){
+            query="SELECT * FROM positions";
+            //WHERE timestamp<" +
+            //QString::number(chartView::interval) + " AND timestamp>" +
+            //QString::number(chartView::beginning);
+        }
+        else{
+            time_t now = time(NULL);
+            query = "SELECT * FROM positions";
+                            //WHERE timestamp<" +
+                            //QString::number(now) + " AND timestamp>" +
+                            //QString::number(ChartView::beginning);
+            chartview::interval= now;
+        }
     }
     else{
         query= "SELECT * FROM positions";
@@ -172,6 +181,8 @@ void chartview::updateChart(){
         *m_scatter << QPointF( p.position::getX(), p.position::getY());
 
     }
+    stat=false;
+    slider=false;
     positions.clear();
 }
 
@@ -196,6 +207,26 @@ void chartview::myChangeValue(int val)
     interval-= val;
     slider=true;
     updateChart();
+}
+
+void chartview::myStats(){
+    chartview::beginning= chartview::statStart.toTime_t();
+    interval= chartview::statStop.toTime_t();
+    QTextStream out(stdout);
+    out << beginning << endl;
+    out << interval << endl;
+    stat=true;
+    updateChart();
+}
+
+void chartview::myStatsStart(QDateTime time)
+{
+    statStart= time;
+}
+
+void chartview::myStatsStop(QDateTime time)
+{
+    statStop=time;
 }
 
 chartview::~chartview()

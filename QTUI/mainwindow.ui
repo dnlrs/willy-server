@@ -109,6 +109,42 @@
      <string>Restart</string>
     </property>
    </widget>
+   <widget class="QDateTimeEdit" name="startTime">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>370</y>
+      <width>194</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="autoFillBackground">
+     <bool>false</bool>
+    </property>
+   </widget>
+   <widget class="QDateTimeEdit" name="endTime">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>410</y>
+      <width>194</width>
+      <height>22</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pushButton_2">
+    <property name="geometry">
+     <rect>
+      <x>40</x>
+      <y>460</y>
+      <width>141</width>
+      <height>41</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Mostra Statistica</string>
+    </property>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
@@ -132,6 +168,9 @@
     <slot>myStop()</slot>
     <slot>myChangeValue(int)</slot>
     <slot>myRestart()</slot>
+    <slot>myStats()</slot>
+    <slot>myStatsStart(QDateTime)</slot>
+    <slot>myStatsStop(QDateTime)</slot>
    </slots>
   </customwidget>
   <customwidget>
@@ -241,6 +280,54 @@
     <hint type="destinationlabel">
      <x>102</x>
      <y>110</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButton_2</sender>
+   <signal>released()</signal>
+   <receiver>chartView</receiver>
+   <slot>myStats()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>149</x>
+     <y>512</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>240</x>
+     <y>511</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>startTime</sender>
+   <signal>dateTimeChanged(QDateTime)</signal>
+   <receiver>chartView</receiver>
+   <slot>myStatsStart(QDateTime)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>145</x>
+     <y>397</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>303</x>
+     <y>393</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>endTime</sender>
+   <signal>dateTimeChanged(QDateTime)</signal>
+   <receiver>chartView</receiver>
+   <slot>myStatsStop(QDateTime)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>93</x>
+     <y>445</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>279</x>
+     <y>437</y>
     </hint>
    </hints>
   </connection>
