@@ -14,8 +14,10 @@ x64
 
 #ignore Qt project files
 *.pro.user
-
 build-Application-Desktop_Qt_5_11_1_MSVC2017_64bit-Debug/
+
+#ignore server exe folder
+server/
 
 [Dd]ebug
 [Rr]elease
