@@ -19,12 +19,12 @@ How to setup Visual Studio project
  4. In the "Solution Explorer" window (View->Solution Explorer), right click on the project 
     (wifi_watchdog_analyzer) and select "Properties"
  5. Under "Configuration Properties -> General" change the "Windows SDK Version" to your latest installed 
-    version (8.1 or 10.0.17...); then Apply
+    version (10.0.17...); then Apply
  6. Select View -> Property Manager; in the new window right click on "Debug | x64" -> "Add existing 
     Property Sheet..." and browse and select the "VS_project_config_x64.props" file in the working directory
  7. (optional until final version) Repeat for "Release | x64"
  8. Make sure you are building and debugging for x64 architecture 
-    (Build -> configuration Manager... -> set Active Solution Platorom to "x64")
+    (Build -> configuration Manager... -> set Active Solution Platform to "x64")
 
 You may now build and run the application.
 
