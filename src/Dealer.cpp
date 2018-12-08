@@ -88,24 +88,40 @@ void Dealer::connect_to_all()
 			closesocket(acceptSocket);
 			continue;
 		}
-		closesocket(this->recvs[iResult].m_sock()); //close socket to avoid multiple accept to leave multiple opened socket
+		if (this->recvs[iResult].has_valid_socket())
+			closesocket(this->recvs[iResult].m_sock()); //close socket to avoid multiple accept to leave multiple opened socket
 		this->recvs[iResult].set_sock(acceptSocket);
+
 		uint32_t ack = 1;
-		size_t bytes = send(acceptSocket, (char *) &ack, sizeof(uint32_t), 0);
+		size_t bytes = send(recvs[iResult].m_sock(), (char *)&ack, sizeof(uint32_t), 0);
 		if (bytes < 0)
 			exit(-1);
+		cout << "Receiver <" << mactos(recvs[iResult].m_mac()) << "> started." << endl;
 
+		
 		//search for the connected board, if this one were already accepted do not count it as a new checkedboard
 		auto it = std::find(guest_list.begin(), guest_list.end(), this->recvs[iResult].m_mac().compacted_mac);
 		if(it == guest_list.end())
-			cout << "++ Receiver <" << mactos(this->recvs[iResult].m_mac()) << "> reconnected and started. ++" << endl;
+			cout << "++ Receiver <" << mactos(this->recvs[iResult].m_mac()) << "> reconnected. ++" << endl;
 		else
 		{
 			guest_list.erase(it); //remove the new connected board from the guest_list
-			cout << "Receiver <" << mactos(this->recvs[iResult].m_mac()) << "> connected and started." << endl;
+			cout << "Receiver <" << mactos(this->recvs[iResult].m_mac()) << "> connected." << endl;
 			checkedboard++;
 		}
 	}
+	
+	//send start to all the anchors
+	/*
+	uint32_t ack = 1;
+	for (Receiver recv : recvs)
+	{
+		size_t bytes = send(recv.m_sock(), (char *)&ack, sizeof(uint32_t), 0);
+		if (bytes < 0)
+			exit(-1);
+		cout << "Receiver <" << mactos(recv.m_mac()) << "> started." << endl;
+	}
+	*/
 }
 
 void Dealer::accept_incoming_req()
@@ -145,7 +161,7 @@ void Dealer::accept_incoming_req()
 		if (acceptSocket == INVALID_SOCKET) 
 		{
 			this->printMtx.lock();
-			cout << "-- [ERROR] -- THREAD ID " << this_thread::get_id() << "Accept failed - Listening thread is closing ...";
+			cout << "-- [ERROR] -- THREAD ID " << this_thread::get_id() << " Accept failed - Listening thread is closing ...";
 			this->printMtx.unlock();
 			if (!this->in_err())
 				this->notify_fatal_err();
@@ -170,7 +186,7 @@ void Dealer::accept_incoming_req()
 		if (bytes <= 0)
 		{
 			this->printMtx.lock();
-			cout << "-- [ERROR] -- THREAD ID " << this_thread::get_id() << "Ack sending failed - Listening thread is closing ...";
+			cout << "-- [ERROR] -- THREAD ID " << this_thread::get_id() << " Ack sending failed - Listening thread is closing ...";
 			this->printMtx.unlock();
 			if (!this->in_err())
 				this->notify_fatal_err();

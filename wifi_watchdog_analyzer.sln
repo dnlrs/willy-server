@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.27703.2026
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "wifi_watchdog_analyzer", "src\wifi_watchdog_analyzer.vcxproj", "{F6B1AC2E-7CEB-4BD7-816C-E14C30FDA234}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "wifi_watchdog_analyzer", "wifi_watchdog_analyzer.vcxproj", "{6909D800-5261-4671-8CCD-13FC60346B89}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -13,19 +13,19 @@ Global
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{F6B1AC2E-7CEB-4BD7-816C-E14C30FDA234}.Debug|x64.ActiveCfg = Debug|x64
-		{F6B1AC2E-7CEB-4BD7-816C-E14C30FDA234}.Debug|x64.Build.0 = Debug|x64
-		{F6B1AC2E-7CEB-4BD7-816C-E14C30FDA234}.Debug|x86.ActiveCfg = Debug|Win32
-		{F6B1AC2E-7CEB-4BD7-816C-E14C30FDA234}.Debug|x86.Build.0 = Debug|Win32
-		{F6B1AC2E-7CEB-4BD7-816C-E14C30FDA234}.Release|x64.ActiveCfg = Release|x64
-		{F6B1AC2E-7CEB-4BD7-816C-E14C30FDA234}.Release|x64.Build.0 = Release|x64
-		{F6B1AC2E-7CEB-4BD7-816C-E14C30FDA234}.Release|x86.ActiveCfg = Release|Win32
-		{F6B1AC2E-7CEB-4BD7-816C-E14C30FDA234}.Release|x86.Build.0 = Release|Win32
+		{6909D800-5261-4671-8CCD-13FC60346B89}.Debug|x64.ActiveCfg = Debug|x64
+		{6909D800-5261-4671-8CCD-13FC60346B89}.Debug|x64.Build.0 = Debug|x64
+		{6909D800-5261-4671-8CCD-13FC60346B89}.Debug|x86.ActiveCfg = Debug|Win32
+		{6909D800-5261-4671-8CCD-13FC60346B89}.Debug|x86.Build.0 = Debug|Win32
+		{6909D800-5261-4671-8CCD-13FC60346B89}.Release|x64.ActiveCfg = Release|x64
+		{6909D800-5261-4671-8CCD-13FC60346B89}.Release|x64.Build.0 = Release|x64
+		{6909D800-5261-4671-8CCD-13FC60346B89}.Release|x86.ActiveCfg = Release|Win32
+		{6909D800-5261-4671-8CCD-13FC60346B89}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {E42DB076-F5BD-41F9-842B-13C9D2386F7B}
+		SolutionGuid = {E7566C5E-6CF0-451A-A44A-D394A3C78549}
 	EndGlobalSection
 EndGlobal
