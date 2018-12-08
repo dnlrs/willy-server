@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Database.h"
+#include "db_exception.h"
 #include "packet.h"
 #include <iostream>
 #include <cstdint> /* for uint64_t */
@@ -8,15 +9,12 @@
 #include <map>
 #include <iterator>
 
-
 using namespace std;
-
 
 Database::Database()
 {
     db = nullptr;
     db_name.clear();
-    db_errmsg.clear();
     db_name = string("database.db");
     db_anchors_nr = 0;
 }
@@ -26,7 +24,6 @@ Database::Database(string dbName, int anchorsNr)
 {
     db = nullptr;
     db_name.clear();
-    db_errmsg.clear();
     this->db_name = dbName;
     this->db_anchors_nr = anchorsNr;
 }
@@ -39,7 +36,8 @@ Database::~Database()
 }
 
 
-void Database::set_anchors_number(int anchorsNr)
+void 
+Database::set_anchors_number(int anchorsNr)
 {
     this->db_anchors_nr = anchorsNr;
 }
@@ -48,15 +46,17 @@ void Database::set_anchors_number(int anchorsNr)
 /*
 Initialize the database connection and necessary tables.
 */
-int Database::init() {
+void
+Database::init() {
 
+    string db_errmsg;
+    
     /* open db connection */
-    db_errmsg.clear();
     if (sqlite3_open(db_name.c_str(), &db) != SQLITE_OK) {
-        db_errmsg = sqlite3_errmsg(db);
-        sqlite3_close(db);
+        const char* errmsg = sqlite3_errmsg(db);
+        sqlite3_close(db); 
         db = nullptr;
-        return -1;
+        throw db_exception(db_errmsg.c_str());
     }
 
     /* create tables if don't already exist */
@@ -79,33 +79,34 @@ int Database::init() {
                         pos_y       REAL NOT NULL,      \
                         PRIMARY KEY (mac, timestamp));";
 
-    char *errmsg;
+    char* errmsg;
     if (sqlite3_exec(db, sql.c_str(), NULL, NULL, &errmsg) != SQLITE_OK) {
-        db_errmsg = string(errmsg);
+        string db_errmsg = string(errmsg);
         sqlite3_free(errmsg);
         sqlite3_close(db);
         db = nullptr;
-        return -1;
+        throw db_exception(db_errmsg.c_str());
     }
-
-    return SQLITE_OK; // 0
 }
 
 /*
 Safely close the database connection
 */
-void Database::quit()
+void 
+Database::quit()
 {
     sqlite3_close(db);
     db = NULL;
 }
 
 
-int Database::add_packet(PACKET_T packet, uint64_t anchor_mac)
+void
+Database::add_packet(PACKET_T packet, uint64_t anchor_mac)
 {
+    string db_errmsg;
 
     if (db == nullptr)
-        return -1; // no db connection
+        throw db_exception("no db connection"); 
 
     string   hash = packet.hash;
     string   ssid = packet.ssid.empty() ? "NULL" : packet.ssid;
@@ -127,7 +128,7 @@ int Database::add_packet(PACKET_T packet, uint64_t anchor_mac)
     result = sqlite3_prepare_v2(db, sql.c_str(), sql.length(), &stmt, NULL);
     if (result != SQLITE_OK || stmt == NULL) {
         db_errmsg = string(sqlite3_errmsg(db));
-        return -1;
+        throw db_exception(db_errmsg.c_str());
     }
 
     // bind parameters
@@ -141,14 +142,14 @@ int Database::add_packet(PACKET_T packet, uint64_t anchor_mac)
 
         db_errmsg = string(sqlite3_errmsg(db));
         sqlite3_finalize(stmt);
-        return -1;
+        throw db_exception(db_errmsg.c_str());
     }
 
     if (!packet.ssid.empty()) {
         if (!sqlite3_bind_text(stmt, 2, ssid.c_str(), ssid.length(), SQLITE_STATIC)) {
             db_errmsg = string(sqlite3_errmsg(db));
             sqlite3_finalize(stmt);
-            return -1;
+            throw db_exception(db_errmsg.c_str());
         }
     }
 
@@ -156,18 +157,35 @@ int Database::add_packet(PACKET_T packet, uint64_t anchor_mac)
     if (sqlite3_step(stmt) != SQLITE_DONE) {
         db_errmsg = string(sqlite3_errmsg(db));
         sqlite3_finalize(stmt);
-        return -1;
+        throw db_exception(db_errmsg.c_str());
     }
 
     sqlite3_finalize(stmt);
-    return SQLITE_OK;
+
+    // ---------- TO BE MOVED -------------------------------------------
+    // manage localization process start
+    auto device      = tmp_map_for_loc[mac];
+    auto anchor_rssi = device[anchor_mac];
+    
+    if (anchor_rssi != 0)
+        throw db_exception("anchor rssi already inserted");
+
+    anchor_rssi = rssi;
+
+    if (device.size() == db_anchors_nr) {
+        // add localization call 
+        // add db DEVICE insertion
+    }
 }
 
-int Database::add_device(DB_DEVICE_T device)
+void
+Database::add_device(DB_DEVICE_T device)
 {
-    if (db == nullptr)
-        return -1; // no db connection
 
+    if (db == nullptr)
+        throw db_exception("no db connection"); // no db connection
+
+    string db_errmsg;
     string sql = "INSERT INTO devices(mac, timestamp, pos_x, pos_y) \
                   VALUES (?, ?, ?, ?);";
 
@@ -180,7 +198,7 @@ int Database::add_device(DB_DEVICE_T device)
     result = sqlite3_prepare_v2(db, sql.c_str(), sql.length(), &stmt, NULL);
     if (result != SQLITE_OK || stmt == NULL) {
         db_errmsg = string(sqlite3_errmsg(db));
-        return -1;
+        throw db_exception(db_errmsg.c_str());
     }
 
     // bind parameters
@@ -191,26 +209,26 @@ int Database::add_device(DB_DEVICE_T device)
 
         db_errmsg = string(sqlite3_errmsg(db));
         sqlite3_finalize(stmt);
-        return -1;
+        throw db_exception(db_errmsg.c_str());
     }
 
     // execute statement
     if (sqlite3_step(stmt) != SQLITE_DONE) {
         db_errmsg = string(sqlite3_errmsg(db));
         sqlite3_finalize(stmt);
-        return -1;
+        throw db_exception(db_errmsg.c_str());
     }
 
     sqlite3_finalize(stmt);
-    return SQLITE_OK;
-
 }
 
-int Database::cleanup_packets_table()
+void
+Database::cleanup_packets_table()
 {
     if (db == nullptr)
-        return -1; // no db connection
+        throw db_exception("no db connection"); // no db connection
 
+    string db_errmsg;
     string sql = "DELETE FROM packets \
                   WHERE hash IN (SELECT hash \
                                  FROM packets \
@@ -220,77 +238,73 @@ int Database::cleanup_packets_table()
     sqlite3_stmt *stmt = NULL;
     int result;
 
-    db_errmsg.clear();
 
     // prepare statement
     result = sqlite3_prepare_v2(db, sql.c_str(), sql.length(), &stmt, NULL);
     if (result != SQLITE_OK || stmt == NULL) {
         db_errmsg = string(sqlite3_errmsg(db));
-        return -1;
+        throw db_exception(db_errmsg.c_str());
     }
 
     // bind parameters
     if (sqlite3_bind_int(stmt, 1, db_anchors_nr)) {
         db_errmsg = string(sqlite3_errmsg(db));
         sqlite3_finalize(stmt);
-        return -1;
+        throw db_exception(db_errmsg.c_str());
     }
 
     // execute statement
     if (sqlite3_step(stmt) != SQLITE_DONE) {
         db_errmsg = string(sqlite3_errmsg(db));
         sqlite3_finalize(stmt);
-        return -1;
+        throw db_exception(db_errmsg.c_str());
     }
 
     sqlite3_finalize(stmt);
-    return SQLITE_OK;
 }
 
-int Database::delete_packets_before(uint64_t timestamp) {
+void
+Database::delete_packets_before(uint64_t timestamp) {
 
     if (db == nullptr)
-        return -1; // no db connection
+        throw db_exception("no db connection"); // no db connection
 
-
+    string db_errmsg;
     string sql = "DELETE FROM packets \
                   WHERE timestamp < ?;";
 
     sqlite3_stmt *stmt = NULL;
     int result;
 
-    db_errmsg.clear();
 
     // prepare statement
     result = sqlite3_prepare_v2(db, sql.c_str(), sql.length(), &stmt, NULL);
     if (result != SQLITE_OK || stmt == NULL) {
         db_errmsg = string(sqlite3_errmsg(db));
-        return -1;
+        throw db_exception(db_errmsg.c_str());
     }
 
     // bind parameters
     if (sqlite3_bind_int64(stmt, 1, timestamp)) {
         db_errmsg = string(sqlite3_errmsg(db));
         sqlite3_finalize(stmt);
-        return -1;
+        throw db_exception(db_errmsg.c_str());
     }
 
     // execute statement
     if (sqlite3_step(stmt) != SQLITE_DONE) {
         db_errmsg = string(sqlite3_errmsg(db));
         sqlite3_finalize(stmt);
-        return -1;
+        throw db_exception(db_errmsg.c_str());
     }
 
     sqlite3_finalize(stmt);
-    return SQLITE_OK;
-
 }
 
 vector<DB_PACKET_T>
 Database::get_device_packets(uint64_t mac, uint64_t ts_start, uint64_t ts_end)
 {
-    db_errmsg.clear();
+    string db_errmsg;
 
     if (ts_start > ts_end) {
         return vector<DB_PACKET_T>();
@@ -351,13 +365,13 @@ Database::get_device_packets(uint64_t mac, uint64_t ts_start, uint64_t ts_end)
 
 int Database::get_devices_nr(uint64_t ts_start, uint64_t ts_end)
 {
-    if (ts_start > ts_end) {
-        return -1;
-    }
+    if (ts_start > ts_end)
+        throw db_exception("start timestamp grater than end timestamp");
 
     int attempts;
     int result;
 
+    string db_errmsg;
     string sql = "SELECT COUNT(DISTINCT mac) \
                   FROM packets               \
                   WHERE timestamp > ? AND timestamp < ?;";
@@ -365,14 +379,11 @@ int Database::get_devices_nr(uint64_t ts_start, uint64_t ts_end)
     sqlite3_stmt *stmt = NULL;
     int rs;
 
-    db_errmsg.clear();
-
     // prepare statement
     rs = sqlite3_prepare_v2(db, sql.c_str(), sql.length(), &stmt, NULL);
     if (rs != SQLITE_OK || stmt == NULL) {
         db_errmsg = string(sqlite3_errmsg(db));
-        cout << "first fail" << endl;
-        return -1;
+        throw db_exception(db_errmsg.c_str());
     }
 
 
@@ -382,8 +393,7 @@ int Database::get_devices_nr(uint64_t ts_start, uint64_t ts_end)
 
         db_errmsg = string(sqlite3_errmsg(db));
         sqlite3_finalize(stmt);
-        cout << "second fail" << endl;
-        return -1;
+        throw db_exception(db_errmsg.c_str());
     }
 
     attempts = 10;
@@ -413,9 +423,8 @@ int Database::get_devices_nr(uint64_t ts_start, uint64_t ts_end)
 int Database::get_persistent_devices(uint64_t ts_start, uint64_t ts_end)
 {
 
-    if (ts_start > ts_end) {
-        return -1;
-    }
+    if (ts_start > ts_end)
+        throw db_exception("start timestamp grater than end timestamp");
 
     int result;
 
@@ -430,13 +439,13 @@ int Database::get_persistent_devices(uint64_t ts_start, uint64_t ts_end)
     sqlite3_stmt *stmt = NULL;
     int rs;
 
-    db_errmsg.clear();
+    string db_errmsg;
 
     // prepare statement
     rs = sqlite3_prepare_v2(db, sql.c_str(), sql.length(), &stmt, NULL);
     if (rs != SQLITE_OK || stmt == NULL) {
         db_errmsg = string(sqlite3_errmsg(db));
-        return -1;
+        throw db_exception(db_errmsg.c_str());
     }
 
     // bind parameters
@@ -447,7 +456,7 @@ int Database::get_persistent_devices(uint64_t ts_start, uint64_t ts_end)
 
         db_errmsg = string(sqlite3_errmsg(db));
         sqlite3_finalize(stmt);
-        return -1;
+        throw db_exception(db_errmsg.c_str());
     }
 
     int attempts = 10;
@@ -477,9 +486,8 @@ int Database::get_persistent_devices(uint64_t ts_start, uint64_t ts_end)
 map<uint64_t, vector<DB_DEVICE_T>>
 Database::get_positions(uint64_t ts_start, uint64_t ts_end)
 {
-    if (ts_start > ts_end) {
-        return map<uint64_t, vector<DB_DEVICE_T>>();
-    }
+    if (ts_start > ts_end)
+        throw db_exception("start timestamp grater than end timestamp");
 
     map<uint64_t, vector<DB_DEVICE_T>> result;
     map<uint64_t, vector<DB_DEVICE_T>>::iterator it;
@@ -491,7 +499,7 @@ Database::get_positions(uint64_t ts_start, uint64_t ts_end)
     sqlite3_stmt *stmt = NULL;
     int rs;
 
-    db_errmsg.clear();
+    string db_errmsg;
 
     // prepare statement
     rs = sqlite3_prepare_v2(db, sql.c_str(), sql.length(), &stmt, NULL);
@@ -546,9 +554,8 @@ Database::get_positions(uint64_t ts_start, uint64_t ts_end)
 map<uint64_t, vector<uint64_t>>
 Database::get_presence_timestamps(uint64_t ts_start, uint64_t ts_end)
 {
-    if (ts_start > ts_end) {
-        return map<uint64_t, vector<uint64_t>>();
-    }
+    if (ts_start > ts_end)
+        throw db_exception("start timestamp grater than end timestamp");
 
     map<uint64_t, vector<uint64_t>> result;
     map<uint64_t, vector<uint64_t>>::iterator entry;
@@ -560,7 +567,7 @@ Database::get_presence_timestamps(uint64_t ts_start, uint64_t ts_end)
     sqlite3_stmt *stmt = NULL;
     int rs;
 
-    db_errmsg.clear();
+    string db_errmsg;
 
     // prepare statement
     rs = sqlite3_prepare_v2(db, sql.c_str(), sql.length(), &stmt, NULL);

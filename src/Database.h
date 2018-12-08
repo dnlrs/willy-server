@@ -8,8 +8,6 @@
 #include <vector>
 #include <map>
 
-#define DB_ERROR -1
-
 using namespace std;
 
 /*!
@@ -75,7 +73,7 @@ public:
      * \return SQLITE_OK if OK
      * \return DB_ERROR  if an error occurs (db_errmsg is set)
      */
-    int init();
+    void init();
 
     /*! Safely closes the database connection 
      */
@@ -89,7 +87,7 @@ public:
      * \return SQLITE_OK if OK
      * \return DB_ERROR if an error occurs (db_errmsg is set)
      */
-    int add_packet(PACKET_T packet, uint64_t anchor_mac);
+    void add_packet(PACKET_T packet, uint64_t anchor_mac);
     
 
     /*! Logs a device nad its associated position into the database.
@@ -99,7 +97,7 @@ public:
      * \return SQLITE_OK if OK
      * \return DB_ERROR if an error occurs (db_errmsg is set)
      */
-    int add_device(DB_DEVICE_T device);
+    void add_device(DB_DEVICE_T device);
 
 
     /*! Cleans the table with all packets received.
@@ -110,7 +108,7 @@ public:
      * \return SQLITE_OK if OK
      * \return DB_ERROR if an error occurs (db_errmsg is set)
      */
-    int cleanup_packets_table();
+    void cleanup_packets_table();
 
 
     /*! Deletes all packets before the timestamp passed as parameter.
@@ -119,7 +117,7 @@ public:
      * \return SQLITE_OK if OK
      * \return DB_ERROR if and erro occurs (db_errmsg is set) 
      */
-    int delete_packets_before(uint64_t timestamp);
+    void delete_packets_before(uint64_t timestamp);
 
 
     /*! Returns all packets belonging to a given device received in a given interval.
@@ -205,16 +203,11 @@ public:
     map<uint64_t, vector<uint64_t>> 
         get_presence_timestamps(uint64_t ts_start, uint64_t ts_end);
 
-    /*! Returns a string message about the last error occurred.
-     * 
-     * \return a string with the last erroroccurred
-     */
-    string get_error_msg() { return db_errmsg; }
-
 private:
     sqlite3 * db;
     string   db_name;
     int      db_anchors_nr;
-    string   db_errmsg;
+
+    map<uint64_t, map<uint64_t, int>> tmp_map_for_loc;
 };
 #endif

@@ -2,6 +2,7 @@
 #include "stdafx.h"
 #include "DBTestUnit.h"
 #include "Database.h"
+#include "db_exception.h"
 #include "packet.h"
 #include <iostream>
 #include <stdio.h>      /* printf, scanf, puts, NULL */
@@ -28,78 +29,70 @@ int test_do(Database db)
         test_v.push_back(test_get_packet());
     }
 
-    // add packets to db
-    for (i = 0; i < packets_nr; i++) {
+    try {
 
-        cout << "Adding: ";
-        test_print_packet(test_v[i]);
-        if (db.add_packet(test_v[i], anchors_mac[rand() % 4])) {
-            cout << "ERROR: " << db.get_error_msg() << endl;
+        // add packets to db
+        for (i = 0; i < packets_nr; i++) {
+
+            cout << "Adding: ";
+            test_print_packet(test_v[i]);
+            db.add_packet(test_v[i], anchors_mac[rand() % 4]);
+
+            db.get_device_packets(test_v[i].mac_addr.compacted_mac, test_v[i].timestamp - 1, test_v[i].timestamp + 1);
+            if (found_packets.size() > 0) {
+                cout << "Added : ";
+                test_print_packet(found_packets[0]);
+            }
+            else {
+                cout << "ERROR adding packet" << endl;
+            }
         }
 
-        found_packets = db.get_device_packets(test_v[i].mac_addr.compacted_mac, test_v[i].timestamp - 1, test_v[i].timestamp + 1);
-        if (found_packets.size() > 0) {
-            cout << "Added : ";
-            test_print_packet(found_packets[0]);
+        // add devices to db
+        for (i = 0; i < packets_nr; i++) {
+            DB_DEVICE_T device = test_get_device();
+            db.add_device(device);
         }
-        else {
-            cout << "ERROR adding packet" << endl;
-        }
-    }
-
-    // add devices to db
-    for (i = 0; i < packets_nr; i++) {
-        DB_DEVICE_T device = test_get_device();
-        db.add_device(device);
-    }
 
 
-    rs = db.cleanup_packets_table();
-    if (rs) {
-        cout << "ERROR: " << db.get_error_msg() << endl;
-    }
+        db.cleanup_packets_table();
 
-    // get devices number in interval
-    int devices_nr = db.get_devices_nr(1415463675, 1415463695);
-    if (devices_nr >= 0) {
+        // get devices number in interval
+        int devices_nr = db.get_devices_nr(1415463675, 1415463695);
         cout << "Total number of devices seen: " << devices_nr << endl;
-    }
-    else {
-        cout << "ERROR: " << db.get_error_msg() << endl;
-    }
 
-    // get number of persistent devices in interval
-    devices_nr = db.get_persistent_devices(1415463680, 1415463683);
-    if (devices_nr >= 0) {
-        cout << "Persistent devices seen: " << devices_nr << endl;
-    }
-    else {
-        cout << "ERROR: " << db.get_error_msg() << endl;
-    }
+        // get number of persistent devices in interval
+        devices_nr = db.get_persistent_devices(1415463680, 1415463683);
+        if (devices_nr >= 0)
+            cout << "Persistent devices seen: " << devices_nr << endl;
+
+        // get posistions in each interval for each device
+        map<uint64_t, vector<DB_DEVICE_T>> positions = db.get_positions(1415463675, 1415463695);
+
+        for (auto& position : positions) {
+            cout << position.first << ":" << endl;
+            for (int j = 0; j < (int)position.second.size(); j++) {
+                cout << "    " << test_string_device(position.second[j]) << endl;
+            }
+        }
 
 
-    // get posistions in each interval for each device
-    map<uint64_t, vector<DB_DEVICE_T>> positions = db.get_positions(1415463675, 1415463695);
+        // get presence timestamps for each device
+        map<uint64_t, vector<uint64_t>> presence = db.get_presence_timestamps(1415463675, 1415463695);
 
-    for (auto& position : positions) {
-        cout << position.first << ":" << endl;
-        for (int j = 0; j < (int)position.second.size(); j++) {
-            cout << "    " << test_string_device(position.second[j]) << endl;
+        for (auto & entry : presence) {
+            mac_t device_mac;
+            device_mac.compacted_mac = entry.first;
+            cout << mactos(device_mac) << ":" << endl;
+
+            for (int j = 0; j < (int)entry.second.size(); j++) {
+                cout << "    " << to_string(entry.second[j]) << endl;
+            }
         }
     }
-
-
-    // get presence timestamps for each device
-    map<uint64_t, vector<uint64_t>> presence = db.get_presence_timestamps(1415463675, 1415463695);
-
-    for (auto & entry : presence) {
-        mac_t device_mac;
-        device_mac.compacted_mac = entry.first;
-        cout << mactos(device_mac) << ":" << endl;
-
-        for (int j = 0; j < (int)entry.second.size(); j++) {
-            cout << "    " << to_string(entry.second[j]) << endl;
-        }
+    catch (db_exception& dbe) {
+        cerr << dbe.what() << endl;
+        return -1;
     }
 
     cout << "Test succeeded" << endl;
