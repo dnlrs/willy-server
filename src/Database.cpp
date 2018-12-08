@@ -146,7 +146,7 @@ Database::add_packet(PACKET_T packet, uint64_t anchor_mac)
     }
 
     if (!packet.ssid.empty()) {
-        if (!sqlite3_bind_text(stmt, 2, ssid.c_str(), ssid.length(), SQLITE_STATIC)) {
+        if (sqlite3_bind_text(stmt, 2, ssid.c_str(), ssid.length(), SQLITE_STATIC)) {
             db_errmsg = string(sqlite3_errmsg(db));
             sqlite3_finalize(stmt);
             throw db_exception(db_errmsg.c_str());
