@@ -55,10 +55,10 @@ double rssitod(int rssi)
 		y = (CD - AF)/(BD - AE)
 	-*
 */
-double trilat(vector<pair<Point2d, int>> args)
+Point2d trilat(vector<pair<Point2d, int>> args)
 {
 	//if only 2 anchors it corresponds to the weighted loc method
-	if(vector.size() == 2)
+	if(args.size() == 2)
 		return weighted_loc(args);
 	
 	
