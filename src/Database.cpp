@@ -161,21 +161,6 @@ Database::add_packet(PACKET_T packet, uint64_t anchor_mac)
     }
 
     sqlite3_finalize(stmt);
-
-    // ---------- TO BE MOVED -------------------------------------------
-    // manage localization process start
-    auto device      = tmp_map_for_loc[mac];
-    auto anchor_rssi = device[anchor_mac];
-    
-    if (anchor_rssi != 0)
-        throw db_exception("anchor rssi already inserted");
-
-    anchor_rssi = rssi;
-
-    if (device.size() == db_anchors_nr) {
-        // add localization call 
-        // add db DEVICE insertion
-    }
 }
 
 void
