@@ -71,7 +71,7 @@ Database::init() {
                         seq_number  INTEGER,            \
                         timestamp   INTEGER NOT NULL,   \
                         anchor_mac  INTEGER NOT NULL,   \
-                        PRIMARY KEY (hash, mac));       \
+                        PRIMARY KEY (hash, mac, anchor_mac));       \
                   CREATE TABLE IF NOT EXISTS devices (  \
                         mac         INTEGER NOT NULL,   \
                         timestamp   INTEGER NOT NULL,   \
