@@ -3,7 +3,7 @@
 #include <fstream>
 #include <iostream>
 #include "packet.h" //for MAC_LENGTH define
-#include "Conf_exceptions.h"
+#include "Conf_exception.h"
 
 /* This class read the conf file token by token (receiver by receiver) */
 
@@ -18,9 +18,9 @@ using namespace std;
 class Conf
 {
 public:
-	Conf() : receiver_n(0), actual_recv(0) {}
-	Conf(const string filename); /* open the file and reads once '#receivers' */
+	Conf() : receiver_n(0), actual_recv(0), finished(false) {}
 	~Conf();
+	void load_conf(const string filename); /* open the file and reads once '#receivers' */
 	void operator() (); /* reads parameter of the next board */
 	int m_recvn() const { return this->receiver_n; }
 	int m_actual_recv() const { return this->actual_recv; }

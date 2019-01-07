@@ -10,7 +10,7 @@
 #include <stdint.h>
 #include "packet.h"
 #include "Point2d.h"
-#include "Net_exceptions.h"
+#include "Net_exception.h"
 
 /* 
  * This is the class that represents a single receiver,

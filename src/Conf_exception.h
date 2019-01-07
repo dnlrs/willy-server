@@ -1,6 +1,5 @@
 #pragma once
 
-using namespace std;
 
 class Conf_exception : public std::exception
 {
@@ -9,14 +8,13 @@ public:
 		this->errmsg =  "--[EXCEPTION]-- +++ Configuration file error - "; 
 	}
 
-	Conf_exception(const char* msg) {
+	Conf_exception(const char* msg) : Conf_exception() {
 		this->errmsg += msg;
 	}
 
-	virtual const char* what() const throw()
-	{
-		return (this->errmsg.c_str());
+	virtual const char* what() const throw(){
+		return errmsg.c_str();
 	}
 private:
-	string errmsg;
+	std::string errmsg;
 };

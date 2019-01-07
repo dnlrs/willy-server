@@ -2,7 +2,7 @@
 #include "Conf.h"
 
 
-Conf::Conf(const string filename)
+void Conf::load_conf(const string filename)
 {
 	/* open file & read receiver num */
 	this->finished = false;
@@ -16,9 +16,9 @@ Conf::Conf(const string filename)
 void Conf::operator() ()
 {
 	if (receiver_n == 0)
-		throw Conf_exception("No configurations are loaded");
+		throw Conf_exception("No configuration is loaded");
 	if (actual_recv == receiver_n || this->finished)
-		throw Conf_exception("Configurations info are finished");
+		throw Conf_exception("Configurations infos are finished");
 	if(file.fail())
 		throw Conf_exception("No such configuration file");
 
