@@ -6,7 +6,7 @@
 #include <utility> // for swap
 #include <vector>
 #include "Point2d.h"
-#include "Line2d.h"
+//#include "Line2d.h"
 
 
 #define C 0  // no shadowing effect: shadowing effect occurs when there are obstacles between sender and receiver
@@ -55,6 +55,8 @@ double rssitod(int rssi)
 		y = (CD - AF)/(BD - AE)
 	-*
 */
+
+/*
 Point2d trilat(vector<pair<Point2d, int>> args)
 {
 	//if only 2 anchors it corresponds to the weighted loc method
@@ -64,8 +66,9 @@ Point2d trilat(vector<pair<Point2d, int>> args)
 	
 
 }
+*/
 
-
+/* pair : BOARD position, RSSI */
 Point2d weighted_loc(vector<pair<Point2d, int>> args)
 {
 	double totweight = 0,
