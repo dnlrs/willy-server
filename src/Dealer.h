@@ -35,7 +35,7 @@ public:
 	boolean in_err();
 	//closes the listening socket
 	void close_listening() { closesocket(this->listenSocket); }
-
+    //returns positions of all connected anchors
     std::map<uint64_t, Point2d> get_anchor_positions();
 
 private:
