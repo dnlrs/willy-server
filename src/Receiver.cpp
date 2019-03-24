@@ -15,6 +15,7 @@ PACKET_T Receiver::operator() ()
 {
 	uint32_t pack_size;
 	SSIZE_T bytes;
+    char recv_buff[2048];
 	string fail = string("recv() failed");
 
 	bytes = recv(this->sock, (char *)&pack_size, sizeof(uint32_t), 0);
@@ -23,13 +24,13 @@ PACKET_T Receiver::operator() ()
 	else if (bytes < 0) //invalid socket or connection closed
 		throw Sock_exception(fail);
 	
-	char* recv_buff = nullptr;
-	recv_buff = (char *)malloc(pack_size * sizeof(char));
-	if (recv_buff == nullptr)
-	{
-		cout << "memory error" << endl;
-		exit(-1);
-	}
+	//char* recv_buff = nullptr;
+	//recv_buff = (char *)malloc(pack_size * sizeof(char));
+	//if (recv_buff == nullptr)
+	//{
+	//	cout << "memory error" << endl;
+	//	exit(-1);
+	//}
 
 	bytes = recv(this->sock, recv_buff, pack_size, 0);
 	if (bytes == 0) //connection closed by peer
