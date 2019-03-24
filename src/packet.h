@@ -76,7 +76,7 @@ inline struct tm epochTotm(const time_t rawtime)
 
 PACKET_T inline deserialize(char *buf) {
 	uint32_t channel;
-	uint32_t rssi;
+	uint32_t rssi;              // TODO: should this be signed?
 	uint32_t sequence_ctrl;
 	uint32_t timestamp;
 	uint32_t ssid_length;

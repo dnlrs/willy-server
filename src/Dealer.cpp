@@ -236,3 +236,13 @@ boolean Dealer::in_err()
 	lock_guard<mutex> lg(this->fatalErrMtx);
 	return this->fatal_error;
 }
+
+std::map<uint64_t, Point2d> Dealer::get_anchor_positions()
+{
+    std::map<uint64_t, Point2d> rval;
+
+    for (Receiver r : recvs)
+        rval[r.m_mac().compacted_mac] = r.m_loc();
+    
+    return rval;
+}

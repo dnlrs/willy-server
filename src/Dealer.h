@@ -36,6 +36,8 @@ public:
 	//closes the listening socket
 	void close_listening() { closesocket(this->listenSocket); }
 
+    std::map<uint64_t, Point2d> get_anchor_positions();
+
 private:
 	SOCKET listenSocket;
 	vector<Receiver>& recvs;
