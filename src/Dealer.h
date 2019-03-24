@@ -44,5 +44,7 @@ private:
 	mutex printMtx;
 	mutex fatalErrMtx;
 	boolean fatal_error; //set if one receiver thread is exited
+
+    std::mutex recvs_mtx;
 };
 

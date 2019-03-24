@@ -176,10 +176,13 @@ void Dealer::accept_incoming_req()
 			continue;
 		}
 		//sets the new socket
-		SOCKET old_sock = this->recvs[iResult].m_sock();
-		this->recvs[iResult].set_sock(acceptSocket);
-		//closes socket to unlock the thread blocked on the recv()
-		closesocket(old_sock);
+        {
+            std::lock_guard<std::mutex> guard(recvs_mtx);
+		    SOCKET old_sock = this->recvs[iResult].m_sock();
+		    this->recvs[iResult].set_sock(acceptSocket);
+		    //closes socket to unlock the thread blocked on the recv()
+		    closesocket(old_sock);
+        }
 		
 		uint32_t ack = 1;
 		size_t bytes = send(acceptSocket, (char *)&ack, sizeof(uint32_t), 0);
@@ -241,7 +244,9 @@ std::map<uint64_t, Point2d> Dealer::get_anchor_positions()
 {
     std::map<uint64_t, Point2d> rval;
 
-    for (Receiver r : recvs)
+    std::lock_guard<std::mutex> guard(recvs_mtx);
+
+    for (Receiver const &r: recvs)
         rval[r.m_mac().compacted_mac] = r.m_loc();
     
     return rval;
