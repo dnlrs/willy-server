@@ -38,16 +38,10 @@
     <ClInclude Include="src\Conf.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\Conf_exceptions.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\Dealer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\localization.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Net_exceptions.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\packet.h">
@@ -69,6 +63,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\device.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Conf_exception.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Net_exception.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
