@@ -33,6 +33,7 @@ typedef struct
 	uint32_t timestamp;
 	uint32_t ssid_lenght;
 	mac_t mac_addr;
+    mac_t anchor_mac; // placeholder
 	std::string ssid;
 	std::string hash;
 } PACKET_T;
@@ -55,16 +56,25 @@ inline std::string mactos(mac_t macaddr)
 
 inline std::string timetos(struct tm time)
 {
-	std::string s;
-	std::vector<std::string> days(7);
-	std::vector<std::string> months(12);
-	days[0] = "Sunday"; days[1] = "Monday"; days[2] = "Tuesday"; days[3] = "Wednesday"; days[4] = "Thursday"; days[5] = "Friday"; days[6] = "Saturday";
-	months[0] = "January"; months[1] = "February"; months[2] = "March"; months[3] = "April"; months[4] = "May"; months[5] = "June"; months[6] = "July";
-	months[7] = "August"; months[8] = "September"; months[9] = "October"; months[10] = "November"; months[11] = "December";
-	s += days[time.tm_wday] + ", " + months[time.tm_mon] + " " + std::to_string(time.tm_mday) + ", " + std::to_string(1900+time.tm_year)
-		+ " " + std::to_string(time.tm_hour) + ":" + std::to_string(time.tm_min) + ":" + std::to_string(time.tm_sec);
-	return s;
-
+	std::string rval;
+    std::vector<std::string> days {
+        "Sunday", "Monday", "Tuesday","Wednesday", 
+        "Thursday", "Friday","Saturday"
+    };
+    std::vector<std::string> months {
+        "January", "February", "March", "April",
+        "May", "June", "July", "August",
+        "September", "October", "November", "December"
+    };
+	
+    rval += days[time.tm_wday] + ", " + months[time.tm_mon] + " " 
+            + std::to_string(time.tm_mday) + ", " 
+            + std::to_string(1900+time.tm_year) + " " 
+            + std::to_string(time.tm_hour) + ":" 
+            + std::to_string(time.tm_min) + ":" 
+            + std::to_string(time.tm_sec);
+	
+    return rval;
 }
 
 inline struct tm epochTotm(const time_t rawtime)
@@ -76,7 +86,7 @@ inline struct tm epochTotm(const time_t rawtime)
 
 PACKET_T inline deserialize(char *buf) {
 	uint32_t channel;
-	uint32_t rssi;              // TODO: should this be signed?
+	uint32_t rssi;
 	uint32_t sequence_ctrl;
 	uint32_t timestamp;
 	uint32_t ssid_length;
