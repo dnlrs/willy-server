@@ -1,5 +1,4 @@
-#include "stdafx.h"
-#include "Database.h"
+#include "database.h"
 #include "db_exception.h"
 #include "packet.h"
 #include <iostream>
@@ -9,47 +8,11 @@
 #include <map>
 #include <iterator>
 
-using namespace std;
 
-Database::Database()
-{
-    db = nullptr;
-    db_name.clear();
-    db_name = string("database.db");
-    db_anchors_nr = 0;
-}
-
-
-Database::Database(string dbName, int anchorsNr)
-{
-    db = nullptr;
-    db_name.clear();
-    this->db_name = dbName;
-    this->db_anchors_nr = anchorsNr;
-}
-
-
-Database::~Database()
-{
-    if (db != nullptr)
-        sqlite3_close(db);
-}
-
-
-void 
-Database::set_anchors_number(int anchorsNr)
-{
-    this->db_anchors_nr = anchorsNr;
-}
-
-
-/*
-Initialize the database connection and necessary tables.
-*/
 void
-Database::init() {
+db::database::open(bool reset) {
 
-    string db_errmsg;
+    std::string db_errmsg;
     
     /* open db connection */
     if (sqlite3_open(db_name.c_str(), &db) != SQLITE_OK) {
@@ -59,29 +22,33 @@ Database::init() {
         throw db_exception(db_errmsg.c_str());
     }
 
+    std::string sql = "";
+
+    if (reset)
+        sql.append( "DROP TABLE IF EXISTS packets; \
+                     DROP TABLE IF EXISTS devices;");
+
     /* create tables if don't already exist */
-    string sql = "DROP TABLE IF EXISTS packets;         \
-                  DROP TABLE IF EXISTS devices;         \
-                  CREATE TABLE IF NOT EXISTS packets (  \
-                        hash        TEXT NOT NULL,      \
-                        ssid        TEXT,               \
-                        rssi        INTEGER NOT NULL,   \
-                        mac         INTEGER NOT NULL,   \
-                        channel     INTEGER,            \
-                        seq_number  INTEGER,            \
-                        timestamp   INTEGER NOT NULL,   \
-                        anchor_mac  INTEGER NOT NULL,   \
-                        PRIMARY KEY (hash, mac, anchor_mac));       \
-                  CREATE TABLE IF NOT EXISTS devices (  \
-                        mac         INTEGER NOT NULL,   \
-                        timestamp   INTEGER NOT NULL,   \
-                        pos_x       REAL NOT NULL,      \
-                        pos_y       REAL NOT NULL,      \
-                        PRIMARY KEY (mac, timestamp));";
+    sql.append( "CREATE TABLE IF NOT EXISTS packets (   \
+                    hash        TEXT NOT NULL,          \
+                    ssid        TEXT,                   \
+                    rssi        INTEGER NOT NULL,       \
+                    mac         INTEGER NOT NULL,       \
+                    channel     INTEGER,                \
+                    seq_number  INTEGER,                \
+                    timestamp   INTEGER NOT NULL,       \
+                    anchor_mac  INTEGER NOT NULL,       \
+                    PRIMARY KEY (hash, mac, anchor_mac));   \
+                CREATE TABLE IF NOT EXISTS devices (    \
+                    mac         INTEGER NOT NULL,       \
+                    timestamp   INTEGER NOT NULL,       \
+                    pos_x       REAL NOT NULL,          \
+                    pos_y       REAL NOT NULL,          \
+                    PRIMARY KEY (mac, timestamp));");
 
     char* errmsg;
     if (sqlite3_exec(db, sql.c_str(), NULL, NULL, &errmsg) != SQLITE_OK) {
-        string db_errmsg = string(errmsg);
+        std::string db_errmsg = std::string(errmsg);
         sqlite3_free(errmsg);
         sqlite3_close(db);
         db = nullptr;
@@ -89,35 +56,32 @@ Database::init() {
     }
 }
 
-/*
-Safely close the database connection
-*/
 void 
-Database::quit()
+db::database::quit()
 {
-    sqlite3_close(db);
-    db = NULL;
+    sqlite3_close(db); // if db == NULL then harmless no-op
+    db = nullptr;
 }
 
 
 void
-Database::add_packet(PACKET_T packet, uint64_t anchor_mac)
+db::database::add_packet(PACKET_T packet, uint64_t anchor_mac)
 {
-    string db_errmsg;
+    std::string db_errmsg;
 
     if (db == nullptr)
         throw db_exception("no db connection"); 
 
-    string   hash = packet.hash;
-    string   ssid = packet.ssid.empty() ? "NULL" : packet.ssid;
-    int      rssi = packet.rssi;
-    uint64_t mac = (uint64_t)packet.mac_addr.compacted_mac;
-    int      channel = packet.channel;
-    int      seq_number = packet.sequence_ctrl;
-    uint64_t timestamp = packet.timestamp;
+    std::string   hash = packet.hash;
+    std::string   ssid = packet.ssid.empty() ? "NULL" : packet.ssid;
+    int           rssi = packet.rssi;
+    uint64_t      mac  = (uint64_t)packet.mac_addr.compacted_mac;
+    int           channel    = packet.channel;
+    int           seq_number = packet.sequence_ctrl;
+    uint64_t      timestamp  = packet.timestamp;
 
-    string sql = "INSERT INTO packets(hash, ssid, rssi, mac, channel, seq_number, timestamp, anchor_mac) \
-                  VALUES (?, ?, ?, ?, ?, ?, ?, ?);";
+    std::string sql = "INSERT INTO packets(hash, ssid, rssi, mac, channel, seq_number, timestamp, anchor_mac) \
+                       VALUES (?, ?, ?, ?, ?, ?, ?, ?);";
 
     sqlite3_stmt *stmt = NULL;
     int result;
@@ -127,7 +91,7 @@ Database::add_packet(PACKET_T packet, uint64_t anchor_mac)
     // prepare statement
     result = sqlite3_prepare_v2(db, sql.c_str(), sql.length(), &stmt, NULL);
     if (result != SQLITE_OK || stmt == NULL) {
-        db_errmsg = string(sqlite3_errmsg(db));
+        db_errmsg = std::string(sqlite3_errmsg(db));
         throw db_exception(db_errmsg.c_str());
     }
 
@@ -140,39 +104,48 @@ Database::add_packet(PACKET_T packet, uint64_t anchor_mac)
         sqlite3_bind_int64(stmt, 7, timestamp) ||
         sqlite3_bind_int64(stmt, 8, anchor_mac)) {
 
-        db_errmsg = string(sqlite3_errmsg(db));
+        db_errmsg = std::string(sqlite3_errmsg(db));
         sqlite3_finalize(stmt);
         throw db_exception(db_errmsg.c_str());
     }
 
     if (!packet.ssid.empty()) {
         if (sqlite3_bind_text(stmt, 2, ssid.c_str(), ssid.length(), SQLITE_STATIC)) {
-            db_errmsg = string(sqlite3_errmsg(db));
+            db_errmsg = std::string(sqlite3_errmsg(db));
             sqlite3_finalize(stmt);
             throw db_exception(db_errmsg.c_str());
         }
     }
 
     // execute statement
-    if (sqlite3_step(stmt) != SQLITE_DONE) {
-        db_errmsg = string(sqlite3_errmsg(db));
+    int rcode = sqlite3_step(stmt);
+    if (rcode != SQLITE_DONE) {
+        db_errmsg = std::string(sqlite3_errmsg(db));
         sqlite3_finalize(stmt);
-        throw db_exception(db_errmsg.c_str());
+        switch (rcode)  
+        {
+        case SQLITE_CONSTRAINT:
+            throw db_exception(
+                db_errmsg.c_str(), db_exception::type::constraint_error);
+            break;
+        default:
+            throw db_exception(db_errmsg.c_str());
+        }
     }
 
     sqlite3_finalize(stmt);
 }
 
 void
-Database::add_device(DB_DEVICE_T device)
+db::database::add_device(device device_in)
 {
 
     if (db == nullptr)
         throw db_exception("no db connection"); // no db connection
 
-    string db_errmsg;
-    string sql = "INSERT INTO devices(mac, timestamp, pos_x, pos_y) \
-                  VALUES (?, ?, ?, ?);";
+    std::string db_errmsg;
+    std::string sql = "INSERT INTO devices(mac, timestamp, pos_x, pos_y) \
+                       VALUES (?, ?, ?, ?);";
 
     sqlite3_stmt *stmt = NULL;
     int result;
@@ -182,43 +155,52 @@ Database::add_device(DB_DEVICE_T device)
     // prepare statement
     result = sqlite3_prepare_v2(db, sql.c_str(), sql.length(), &stmt, NULL);
     if (result != SQLITE_OK || stmt == NULL) {
-        db_errmsg = string(sqlite3_errmsg(db));
+        db_errmsg = std::string(sqlite3_errmsg(db));
         throw db_exception(db_errmsg.c_str());
     }
 
     // bind parameters
-    if (sqlite3_bind_int64(stmt, 1, device.mac) ||
-        sqlite3_bind_int64(stmt, 2, device.timestamp) ||
-        sqlite3_bind_double(stmt, 3, device.pos_x) ||
-        sqlite3_bind_double(stmt, 4, device.pos_y)) {
+    if (sqlite3_bind_int64(stmt, 1, device_in.mac) ||
+        sqlite3_bind_int64(stmt, 2, device_in.timestamp) ||
+        sqlite3_bind_double(stmt, 3, device_in.pos_x) ||
+        sqlite3_bind_double(stmt, 4, device_in.pos_y)) {
 
-        db_errmsg = string(sqlite3_errmsg(db));
+        db_errmsg = std::string(sqlite3_errmsg(db));
         sqlite3_finalize(stmt);
         throw db_exception(db_errmsg.c_str());
     }
 
     // execute statement
-    if (sqlite3_step(stmt) != SQLITE_DONE) {
-        db_errmsg = string(sqlite3_errmsg(db));
+    int rcode = sqlite3_step(stmt);
+    if (rcode != SQLITE_DONE) {
+        db_errmsg = std::string(sqlite3_errmsg(db));
         sqlite3_finalize(stmt);
-        throw db_exception(db_errmsg.c_str());
+        switch (rcode)
+        {
+        case SQLITE_CONSTRAINT:
+            throw db_exception(
+                db_errmsg.c_str(), db_exception::type::constraint_error);
+            break;
+        default:
+            throw db_exception(db_errmsg.c_str());
+        }
     }
 
     sqlite3_finalize(stmt);
 }
 
 void
-Database::cleanup_packets_table()
+db::database::cleanup_packets_table()
 {
     if (db == nullptr)
         throw db_exception("no db connection"); // no db connection
 
-    string db_errmsg;
-    string sql = "DELETE FROM packets \
-                  WHERE hash IN (SELECT hash \
-                                 FROM packets \
-                                 GROUP BY hash \
-                                 HAVING COUNT(DISTINCT anchor_mac) < ?);";
+    std::string db_errmsg;
+    std::string sql = "DELETE FROM packets \
+                       WHERE hash IN (SELECT hash \
+                                      FROM packets \
+                                      GROUP BY hash \
+                                      HAVING COUNT(DISTINCT anchor_mac) < ?);";
 
     sqlite3_stmt *stmt = NULL;
     int result;
@@ -227,20 +209,20 @@ Database::cleanup_packets_table()
     // prepare statement
     result = sqlite3_prepare_v2(db, sql.c_str(), sql.length(), &stmt, NULL);
     if (result != SQLITE_OK || stmt == NULL) {
-        db_errmsg = string(sqlite3_errmsg(db));
+        db_errmsg = std::string(sqlite3_errmsg(db));
         throw db_exception(db_errmsg.c_str());
     }
 
     // bind parameters
     if (sqlite3_bind_int(stmt, 1, db_anchors_nr)) {
-        db_errmsg = string(sqlite3_errmsg(db));
+        db_errmsg = std::string(sqlite3_errmsg(db));
         sqlite3_finalize(stmt);
         throw db_exception(db_errmsg.c_str());
     }
 
     // execute statement
     if (sqlite3_step(stmt) != SQLITE_DONE) {
-        db_errmsg = string(sqlite3_errmsg(db));
+        db_errmsg = std::string(sqlite3_errmsg(db));
         sqlite3_finalize(stmt);
         throw db_exception(db_errmsg.c_str());
     }
@@ -249,14 +231,14 @@ Database::cleanup_packets_table()
 }
 
 void
-Database::delete_packets_before(uint64_t timestamp) {
+db::database::delete_packets_before(uint64_t timestamp) {
 
     if (db == nullptr)
         throw db_exception("no db connection"); // no db connection
 
-    string db_errmsg;
-    string sql = "DELETE FROM packets \
-                  WHERE timestamp < ?;";
+    std::string db_errmsg;
+    std::string sql = "DELETE FROM packets \
+                       WHERE timestamp < ?;";
 
     sqlite3_stmt *stmt = NULL;
     int result;
@@ -265,20 +247,20 @@ Database::delete_packets_before(uint64_t timestamp) {
     // prepare statement
     result = sqlite3_prepare_v2(db, sql.c_str(), sql.length(), &stmt, NULL);
     if (result != SQLITE_OK || stmt == NULL) {
-        db_errmsg = string(sqlite3_errmsg(db));
+        db_errmsg = std::string(sqlite3_errmsg(db));
         throw db_exception(db_errmsg.c_str());
     }
 
     // bind parameters
     if (sqlite3_bind_int64(stmt, 1, timestamp)) {
-        db_errmsg = string(sqlite3_errmsg(db));
+        db_errmsg = std::string(sqlite3_errmsg(db));
         sqlite3_finalize(stmt);
         throw db_exception(db_errmsg.c_str());
     }
 
     // execute statement
     if (sqlite3_step(stmt) != SQLITE_DONE) {
-        db_errmsg = string(sqlite3_errmsg(db));
+        db_errmsg = std::string(sqlite3_errmsg(db));
         sqlite3_finalize(stmt);
         throw db_exception(db_errmsg.c_str());
     }
@@ -286,20 +268,20 @@ Database::delete_packets_before(uint64_t timestamp) {
     sqlite3_finalize(stmt);
 }
 
-vector<DB_PACKET_T>
-Database::get_device_packets(uint64_t mac, uint64_t ts_start, uint64_t ts_end)
+std::vector<PACKET_T>
+db::database::get_device_packets(uint64_t mac, uint64_t ts_start, uint64_t ts_end)
 {
-    string db_errmsg;
+    std::string db_errmsg;
 
     if (ts_start > ts_end) {
-        return vector<DB_PACKET_T>();
+        return std::vector<PACKET_T>();
     }
 
-    vector<DB_PACKET_T> result;
+    std::vector<PACKET_T> result;
 
-    string sql = "SELECT hash, rssi, mac, seq_number, timestamp, anchor_mac  \
-                  FROM packets                                               \
-                  WHERE mac = ? AND timestamp > ? AND timestamp < ?;";
+    std::string sql = "SELECT hash, rssi, mac, seq_number, timestamp, anchor_mac  \
+                       FROM packets                                               \
+                       WHERE mac = ? AND timestamp > ? AND timestamp < ?;";
 
     sqlite3_stmt *stmt = NULL;
     int rs;
@@ -308,8 +290,8 @@ Database::get_device_packets(uint64_t mac, uint64_t ts_start, uint64_t ts_end)
     // prepare statement
     rs = sqlite3_prepare_v2(db, sql.c_str(), sql.length(), &stmt, NULL);
     if (rs != SQLITE_OK || stmt == NULL) {
-        db_errmsg = string(sqlite3_errmsg(db));
-        return vector<DB_PACKET_T>();
+        db_errmsg = std::string(sqlite3_errmsg(db));
+        return std::vector<PACKET_T>();
     }
 
 
@@ -318,9 +300,9 @@ Database::get_device_packets(uint64_t mac, uint64_t ts_start, uint64_t ts_end)
         sqlite3_bind_int64(stmt, 2, ts_start) ||
         sqlite3_bind_int64(stmt, 3, ts_end)) {
 
-        db_errmsg = string(sqlite3_errmsg(db));
+        db_errmsg = std::string(sqlite3_errmsg(db));
         sqlite3_finalize(stmt);
-        return vector<DB_PACKET_T>();
+        return std::vector<PACKET_T>();
     }
 
     rs = sqlite3_step(stmt);
@@ -331,14 +313,14 @@ Database::get_device_packets(uint64_t mac, uint64_t ts_start, uint64_t ts_end)
         if (rs == SQLITE_ERROR || rs == SQLITE_MISUSE)
             break;
 
-        DB_PACKET_T packet;
+        PACKET_T packet;
 
-        packet.hash = string((char*)sqlite3_column_text(stmt, 0));
+        packet.hash = std::string((char*)sqlite3_column_text(stmt, 0));
         packet.rssi = sqlite3_column_int(stmt, 1);
-        packet.mac = sqlite3_column_int64(stmt, 2);
-        packet.seq_number = sqlite3_column_int(stmt, 3);
-        packet.timestamp = sqlite3_column_int64(stmt, 4);
-        packet.anchor_mac = sqlite3_column_int64(stmt, 5);
+        packet.mac_addr.compacted_mac   = sqlite3_column_int64(stmt, 2);
+        packet.sequence_ctrl            = sqlite3_column_int(stmt, 3);
+        packet.timestamp                = sqlite3_column_int64(stmt, 4);
+        packet.anchor_mac.compacted_mac = sqlite3_column_int64(stmt, 5);
 
         result.push_back(packet);
         rs = sqlite3_step(stmt);
@@ -348,7 +330,7 @@ Database::get_device_packets(uint64_t mac, uint64_t ts_start, uint64_t ts_end)
     return result;
 }
 
-int Database::get_devices_nr(uint64_t ts_start, uint64_t ts_end)
+int db::database::get_devices_nr(uint64_t ts_start, uint64_t ts_end)
 {
     if (ts_start > ts_end)
         throw db_exception("start timestamp grater than end timestamp");
@@ -356,10 +338,10 @@ int Database::get_devices_nr(uint64_t ts_start, uint64_t ts_end)
     int attempts;
     int result;
 
-    string db_errmsg;
-    string sql = "SELECT COUNT(DISTINCT mac) \
-                  FROM packets               \
-                  WHERE timestamp > ? AND timestamp < ?;";
+    std::string db_errmsg;
+    std::string sql = "SELECT COUNT(DISTINCT mac) \
+                       FROM packets               \
+                       WHERE timestamp > ? AND timestamp < ?;";
 
     sqlite3_stmt *stmt = NULL;
     int rs;
@@ -367,7 +349,7 @@ int Database::get_devices_nr(uint64_t ts_start, uint64_t ts_end)
     // prepare statement
     rs = sqlite3_prepare_v2(db, sql.c_str(), sql.length(), &stmt, NULL);
     if (rs != SQLITE_OK || stmt == NULL) {
-        db_errmsg = string(sqlite3_errmsg(db));
+        db_errmsg = std::string(sqlite3_errmsg(db));
         throw db_exception(db_errmsg.c_str());
     }
 
@@ -376,7 +358,7 @@ int Database::get_devices_nr(uint64_t ts_start, uint64_t ts_end)
     if (sqlite3_bind_int64(stmt, 1, ts_start) ||
         sqlite3_bind_int64(stmt, 2, ts_end)) {
 
-        db_errmsg = string(sqlite3_errmsg(db));
+        db_errmsg = std::string(sqlite3_errmsg(db));
         sqlite3_finalize(stmt);
         throw db_exception(db_errmsg.c_str());
     }
@@ -396,7 +378,7 @@ int Database::get_devices_nr(uint64_t ts_start, uint64_t ts_end)
         result = 0;
         break;
     default:
-        db_errmsg = string(sqlite3_errmsg(db));
+        db_errmsg = std::string(sqlite3_errmsg(db));
         result = -1;
         break;
     }
@@ -405,7 +387,8 @@ int Database::get_devices_nr(uint64_t ts_start, uint64_t ts_end)
     return result;
 }
 
-int Database::get_persistent_devices(uint64_t ts_start, uint64_t ts_end)
+int 
+db::database::get_persistent_devices(uint64_t ts_start, uint64_t ts_end)
 {
 
     if (ts_start > ts_end)
@@ -413,33 +396,33 @@ int Database::get_persistent_devices(uint64_t ts_start, uint64_t ts_end)
 
     int result;
 
-    string sql = "SELECT COUNT(DISTINCT mac)    \
-                  FROM devices                  \
-                  WHERE timestamp >= ? AND timestamp <= ? \
-                  GROUP BY mac \
-                  HAVING COUNT(DISTINCT timestamp) = (SELECT COUNT(DISTINCT timestamp) \
-                                                      FROM devices \
-                                                      WHERE timestamp >= ? AND timestamp <= ?);";
+    std::string sql = "SELECT COUNT(DISTINCT mac)    \
+                       FROM devices                  \
+                       WHERE timestamp >= ? AND timestamp <= ? \
+                       GROUP BY mac \
+                       HAVING COUNT(DISTINCT timestamp) = (SELECT COUNT(DISTINCT timestamp) \
+                                                           FROM devices \
+                                                           WHERE timestamp >= ? AND timestamp <= ?);";
 
     sqlite3_stmt *stmt = NULL;
     int rs;
 
-    string db_errmsg;
+    std::string db_errmsg;
 
     // prepare statement
     rs = sqlite3_prepare_v2(db, sql.c_str(), sql.length(), &stmt, NULL);
     if (rs != SQLITE_OK || stmt == NULL) {
-        db_errmsg = string(sqlite3_errmsg(db));
+        db_errmsg = std::string(sqlite3_errmsg(db));
         throw db_exception(db_errmsg.c_str());
     }
 
-    // bind parameters
+    // bind parameterssz
     if (sqlite3_bind_int64(stmt, 1, ts_start) ||
         sqlite3_bind_int64(stmt, 2, ts_end) ||
         sqlite3_bind_int64(stmt, 3, ts_start) ||
         sqlite3_bind_int64(stmt, 4, ts_end)) {
 
-        db_errmsg = string(sqlite3_errmsg(db));
+        db_errmsg = std::string(sqlite3_errmsg(db));
         sqlite3_finalize(stmt);
         throw db_exception(db_errmsg.c_str());
     }
@@ -459,7 +442,7 @@ int Database::get_persistent_devices(uint64_t ts_start, uint64_t ts_end)
         result = 0;
         break;
     default:
-        db_errmsg = string(sqlite3_errmsg(db));
+        db_errmsg = std::string(sqlite3_errmsg(db));
         result = -1;
         break;
     }
@@ -468,38 +451,38 @@ int Database::get_persistent_devices(uint64_t ts_start, uint64_t ts_end)
     return result;
 }
 
-map<uint64_t, vector<DB_DEVICE_T>>
-Database::get_positions(uint64_t ts_start, uint64_t ts_end)
+std::map<uint64_t, std::vector<device>>
+db::database::get_positions(uint64_t ts_start, uint64_t ts_end)
 {
     if (ts_start > ts_end)
         throw db_exception("start timestamp grater than end timestamp");
 
-    map<uint64_t, vector<DB_DEVICE_T>> result;
-    map<uint64_t, vector<DB_DEVICE_T>>::iterator it;
+    std::map<uint64_t, std::vector<device>> result;
+    std::map<uint64_t, std::vector<device>>::iterator it;
 
-    string sql = "SELECT mac, timestamp, pos_x, pos_y   \
-                  FROM devices                          \
-                  WHERE timestamp >= ? AND timestamp <= ?;";
+    std::string sql = "SELECT mac, timestamp, pos_x, pos_y   \
+                       FROM devices                          \
+                       WHERE timestamp >= ? AND timestamp <= ?;";
 
     sqlite3_stmt *stmt = NULL;
     int rs;
 
-    string db_errmsg;
+    std::string db_errmsg;
 
     // prepare statement
     rs = sqlite3_prepare_v2(db, sql.c_str(), sql.length(), &stmt, NULL);
     if (rs != SQLITE_OK || stmt == NULL) {
-        db_errmsg = string(sqlite3_errmsg(db));
-        return map<uint64_t, vector<DB_DEVICE_T>>();
+        db_errmsg = std::string(sqlite3_errmsg(db));
+        return std::map<uint64_t, std::vector<device>>();
     }
 
     // bind parameters
     if (sqlite3_bind_int64(stmt, 1, ts_start) ||
         sqlite3_bind_int64(stmt, 2, ts_end)) {
 
-        db_errmsg = string(sqlite3_errmsg(db));
+        db_errmsg = std::string(sqlite3_errmsg(db));
         sqlite3_finalize(stmt);
-        return map<uint64_t, vector<DB_DEVICE_T>>();
+        return std::map<uint64_t, std::vector<device>>();
     }
 
     rs = sqlite3_step(stmt);
@@ -510,21 +493,21 @@ Database::get_positions(uint64_t ts_start, uint64_t ts_end)
         if (rs == SQLITE_ERROR || rs == SQLITE_MISUSE)
             break;
 
-        DB_DEVICE_T device;
+        device rdevice;
 
-        device.mac = sqlite3_column_int64(stmt, 0);
-        device.timestamp = sqlite3_column_int64(stmt, 1);
-        device.pos_x = sqlite3_column_double(stmt, 2);
-        device.pos_y = sqlite3_column_double(stmt, 3);
+        rdevice.mac = sqlite3_column_int64(stmt, 0);
+        rdevice.timestamp = sqlite3_column_int64(stmt, 1);
+        rdevice.pos_x = sqlite3_column_double(stmt, 2);
+        rdevice.pos_y = sqlite3_column_double(stmt, 3);
 
-        it = result.find(device.timestamp);
+        it = result.find(rdevice.timestamp);
         if (it == result.end()) {
-            vector<DB_DEVICE_T> tmp_vector;
-            tmp_vector.push_back(device);
-            result.insert(make_pair(device.timestamp, tmp_vector));
+            std::vector<device> tmp_vector;
+            tmp_vector.push_back(rdevice);
+            result.insert(make_pair(rdevice.timestamp, tmp_vector));
         }
         else {
-            it->second.push_back(device);
+            it->second.push_back(rdevice);
         }
 
         rs = sqlite3_step(stmt);
@@ -536,38 +519,38 @@ Database::get_positions(uint64_t ts_start, uint64_t ts_end)
 }
 
 
-map<uint64_t, vector<uint64_t>>
-Database::get_presence_timestamps(uint64_t ts_start, uint64_t ts_end)
+std::map<uint64_t, std::vector<uint64_t>>
+db::database::get_presence_timestamps(uint64_t ts_start, uint64_t ts_end)
 {
     if (ts_start > ts_end)
         throw db_exception("start timestamp grater than end timestamp");
 
-    map<uint64_t, vector<uint64_t>> result;
-    map<uint64_t, vector<uint64_t>>::iterator entry;
+    std::map<uint64_t, std::vector<uint64_t>> result;
+    std::map<uint64_t, std::vector<uint64_t>>::iterator entry;
 
-    string sql = "SELECT mac, timestamp                 \
-                  FROM devices                          \
-                  WHERE timestamp >= ? AND timestamp <= ?;";
+    std::string sql = "SELECT mac, timestamp                 \
+                       FROM devices                          \
+                       WHERE timestamp >= ? AND timestamp <= ?;";
 
     sqlite3_stmt *stmt = NULL;
     int rs;
 
-    string db_errmsg;
+    std::string db_errmsg;
 
     // prepare statement
     rs = sqlite3_prepare_v2(db, sql.c_str(), sql.length(), &stmt, NULL);
     if (rs != SQLITE_OK || stmt == NULL) {
-        db_errmsg = string(sqlite3_errmsg(db));
-        return map<uint64_t, vector<uint64_t>>();
+        db_errmsg = std::string(sqlite3_errmsg(db));
+        return std::map<uint64_t, std::vector<uint64_t>>();
     }
 
     // bind parameters
     if (sqlite3_bind_int64(stmt, 1, ts_start) ||
         sqlite3_bind_int64(stmt, 2, ts_end)) {
 
-        db_errmsg = string(sqlite3_errmsg(db));
+        db_errmsg = std::string(sqlite3_errmsg(db));
         sqlite3_finalize(stmt);
-        return map<uint64_t, vector<uint64_t>>();
+        return std::map<uint64_t, std::vector<uint64_t>>();
     }
 
 
@@ -584,7 +567,7 @@ Database::get_presence_timestamps(uint64_t ts_start, uint64_t ts_end)
 
         entry = result.find(mac);
         if (entry == result.end()) {
-            vector<uint64_t> tmp_vector;
+            std::vector<uint64_t> tmp_vector;
             tmp_vector.push_back(timestamp);
             result.insert(make_pair(mac, tmp_vector));
         }

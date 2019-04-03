@@ -9,7 +9,7 @@
 #include <utility>
 #include "Conf.h"
 #include "Dealer.h"
-#include "Database.h"
+#include "database.h"
 #include "db_exception.h"
 #include "Collector.h"
 #include "localization.h"
@@ -31,7 +31,7 @@ std::string end_mess("\n\t*...<server closed>...*\t\n");
 using namespace std;
 
 
-void read_board_data(Receiver& receiver, mutex& printMtx, Dealer& dealer, Database& db, Collector& collector)
+void read_board_data(Receiver& receiver, mutex& printMtx, Dealer& dealer, db::database& db, Collector& collector)
 {
 	printMtx.lock();
 	cout << "-- [RECEIVING THREAD] -- THREAD ID :" << this_thread::get_id() << ": receiving thread is active for board <"<< mactos(receiver.m_mac()) << ">" << endl;
@@ -84,13 +84,13 @@ void read_board_data(Receiver& receiver, mutex& printMtx, Dealer& dealer, Databa
 				}
 
 				Point2d localized_pos = weighted_loc(loc_info);
-				DB_DEVICE_T device;
-				device.mac = pack.mac_addr.compacted_mac;
-				device.timestamp = pack.timestamp;
-				device.pos_x = localized_pos.m_x();
-				device.pos_y = localized_pos.m_y();
+				device new_device;
+				new_device.mac = pack.mac_addr.compacted_mac;
+				new_device.timestamp = pack.timestamp;
+				new_device.pos_x = localized_pos.m_x();
+				new_device.pos_y = localized_pos.m_y();
 
-				db.add_device(device);
+				db.add_device(new_device);
 			}
 				
 		}
@@ -129,12 +129,19 @@ void read_board_data(Receiver& receiver, mutex& printMtx, Dealer& dealer, Databa
 			cerr << recv_e.what() << endl;
 			return;
 		}
-		catch (db_exception& db_e) //connection closed by the peer
+		catch (db::db_exception& db_e) //connection closed by the peer
 		{
-			//dealer.notify_fatal_err(); //inform the other threads to exit
-			lock_guard<mutex> lg(printMtx);
-			cerr << db_e.what() << endl;
-			//return;
+            lock_guard<mutex> lg(printMtx);
+            switch (db_e.why())
+            {
+            case db::db_exception::constraint_error:
+                cerr << db_e.what() << endl;
+                break;
+            default:
+    			dealer.notify_fatal_err(); //inform the other threads to exit
+			    cerr << db_e.what() << endl;
+			    return;
+            }
 		}
 	}
 }
@@ -214,8 +221,8 @@ int main()
     /* =============================================
                 DB INITIALIZATION
     ============================================= */
-    Database db("database.db", conf.m_recvn());
-    db.init();
+    db::database db("database.db", conf.m_recvn());
+    db.open(true);
 
 
 	/* =============================================
