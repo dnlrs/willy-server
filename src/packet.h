@@ -30,7 +30,7 @@ typedef struct
 	uint32_t channel;
 	int32_t rssi;
 	uint32_t sequence_ctrl;
-	uint32_t timestamp;
+	uint32_t timestamp; // TODO: make this uint64_t
 	uint32_t ssid_lenght;
 	mac_t mac_addr;
     mac_t anchor_mac; // placeholder

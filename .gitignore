@@ -8,9 +8,13 @@ database.db
 #ignore Visual Studio project files
 .vs
 x64
+*.dll
+*.exe
 
-*.vcxproj
-*.vcxproj.*
+# Visual Studio user option files
+*.suo
+*.user
+
 
 #ignore Qt project files
 *.pro.user

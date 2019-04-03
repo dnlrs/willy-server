@@ -154,7 +154,6 @@ void read_board_data(Receiver& receiver, mutex& printMtx, Dealer& dealer, db::da
 int main()
 {
 	WSADATA wsaData;
-	int i;
 	
 	vector<Receiver> receivers;
 	// Initialize Winsock.
@@ -178,7 +177,7 @@ int main()
 		exit(-1);
 	}
 	cout << "-- [BOARDS' LIST] --" << endl;
-	for (i = 0; i < conf.m_recvn(); i++)
+	for (int i = 0; i < conf.m_recvn(); i++)
 	{
 		try
 		{
