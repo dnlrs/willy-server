@@ -12,14 +12,12 @@
 void
 db::database::open(bool reset) {
 
-    std::string db_errmsg;
-    
     /* open db connection */
     if (sqlite3_open(db_name.c_str(), &db) != SQLITE_OK) {
         const char* errmsg = sqlite3_errmsg(db);
         sqlite3_close(db); 
         db = nullptr;
-        throw db_exception(db_errmsg.c_str());
+        throw db_exception(errmsg);
     }
 
     std::string sql = "";
@@ -89,14 +87,14 @@ db::database::add_packet(PACKET_T packet, uint64_t anchor_mac)
     db_errmsg.clear();
 
     // prepare statement
-    result = sqlite3_prepare_v2(db, sql.c_str(), sql.length(), &stmt, NULL);
+    result = sqlite3_prepare_v2(db, sql.c_str(), (int) sql.length(), &stmt, NULL);
     if (result != SQLITE_OK || stmt == NULL) {
         db_errmsg = std::string(sqlite3_errmsg(db));
         throw db_exception(db_errmsg.c_str());
     }
 
     // bind parameters
-    if (sqlite3_bind_text(stmt, 1, hash.c_str(), hash.length(), SQLITE_STATIC) ||
+    if (sqlite3_bind_text(stmt, 1, hash.c_str(), (int) hash.length(), SQLITE_STATIC) ||
         sqlite3_bind_int(stmt, 3, rssi) ||
         sqlite3_bind_int64(stmt, 4, mac) ||
         sqlite3_bind_int(stmt, 5, channel) ||
@@ -110,7 +108,7 @@ db::database::add_packet(PACKET_T packet, uint64_t anchor_mac)
     }
 
     if (!packet.ssid.empty()) {
-        if (sqlite3_bind_text(stmt, 2, ssid.c_str(), ssid.length(), SQLITE_STATIC)) {
+        if (sqlite3_bind_text(stmt, 2, ssid.c_str(), (int) ssid.length(), SQLITE_STATIC)) {
             db_errmsg = std::string(sqlite3_errmsg(db));
             sqlite3_finalize(stmt);
             throw db_exception(db_errmsg.c_str());
@@ -153,7 +151,7 @@ db::database::add_device(device device_in)
     db_errmsg.clear();
 
     // prepare statement
-    result = sqlite3_prepare_v2(db, sql.c_str(), sql.length(), &stmt, NULL);
+    result = sqlite3_prepare_v2(db, sql.c_str(), (int) sql.length(), &stmt, NULL);
     if (result != SQLITE_OK || stmt == NULL) {
         db_errmsg = std::string(sqlite3_errmsg(db));
         throw db_exception(db_errmsg.c_str());
@@ -207,7 +205,7 @@ db::database::cleanup_packets_table()
 
 
     // prepare statement
-    result = sqlite3_prepare_v2(db, sql.c_str(), sql.length(), &stmt, NULL);
+    result = sqlite3_prepare_v2(db, sql.c_str(), (int) sql.length(), &stmt, NULL);
     if (result != SQLITE_OK || stmt == NULL) {
         db_errmsg = std::string(sqlite3_errmsg(db));
         throw db_exception(db_errmsg.c_str());
@@ -245,7 +243,7 @@ db::database::delete_packets_before(uint64_t timestamp) {
 
 
     // prepare statement
-    result = sqlite3_prepare_v2(db, sql.c_str(), sql.length(), &stmt, NULL);
+    result = sqlite3_prepare_v2(db, sql.c_str(), (int) sql.length(), &stmt, NULL);
     if (result != SQLITE_OK || stmt == NULL) {
         db_errmsg = std::string(sqlite3_errmsg(db));
         throw db_exception(db_errmsg.c_str());
@@ -288,7 +286,7 @@ db::database::get_device_packets(uint64_t mac, uint64_t ts_start, uint64_t ts_en
 
 
     // prepare statement
-    rs = sqlite3_prepare_v2(db, sql.c_str(), sql.length(), &stmt, NULL);
+    rs = sqlite3_prepare_v2(db, sql.c_str(), (int) sql.length(), &stmt, NULL);
     if (rs != SQLITE_OK || stmt == NULL) {
         db_errmsg = std::string(sqlite3_errmsg(db));
         return std::vector<PACKET_T>();
@@ -347,7 +345,7 @@ int db::database::get_devices_nr(uint64_t ts_start, uint64_t ts_end)
     int rs;
 
     // prepare statement
-    rs = sqlite3_prepare_v2(db, sql.c_str(), sql.length(), &stmt, NULL);
+    rs = sqlite3_prepare_v2(db, sql.c_str(), (int) sql.length(), &stmt, NULL);
     if (rs != SQLITE_OK || stmt == NULL) {
         db_errmsg = std::string(sqlite3_errmsg(db));
         throw db_exception(db_errmsg.c_str());
@@ -410,7 +408,7 @@ db::database::get_persistent_devices(uint64_t ts_start, uint64_t ts_end)
     std::string db_errmsg;
 
     // prepare statement
-    rs = sqlite3_prepare_v2(db, sql.c_str(), sql.length(), &stmt, NULL);
+    rs = sqlite3_prepare_v2(db, sql.c_str(), (int) sql.length(), &stmt, NULL);
     if (rs != SQLITE_OK || stmt == NULL) {
         db_errmsg = std::string(sqlite3_errmsg(db));
         throw db_exception(db_errmsg.c_str());
@@ -470,7 +468,7 @@ db::database::get_positions(uint64_t ts_start, uint64_t ts_end)
     std::string db_errmsg;
 
     // prepare statement
-    rs = sqlite3_prepare_v2(db, sql.c_str(), sql.length(), &stmt, NULL);
+    rs = sqlite3_prepare_v2(db, sql.c_str(), (int) sql.length(), &stmt, NULL);
     if (rs != SQLITE_OK || stmt == NULL) {
         db_errmsg = std::string(sqlite3_errmsg(db));
         return std::map<uint64_t, std::vector<device>>();
@@ -538,7 +536,7 @@ db::database::get_presence_timestamps(uint64_t ts_start, uint64_t ts_end)
     std::string db_errmsg;
 
     // prepare statement
-    rs = sqlite3_prepare_v2(db, sql.c_str(), sql.length(), &stmt, NULL);
+    rs = sqlite3_prepare_v2(db, sql.c_str(), (int) sql.length(), &stmt, NULL);
     if (rs != SQLITE_OK || stmt == NULL) {
         db_errmsg = std::string(sqlite3_errmsg(db));
         return std::map<uint64_t, std::vector<uint64_t>>();
