@@ -61,11 +61,11 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Conf.h" />
-    <ClInclude Include="src\Conf_exceptions.h" />
+    <ClInclude Include="src\Conf_exception.h" />
     <ClInclude Include="src\Dealer.h" />
     <ClInclude Include="src\device.h" />
     <ClInclude Include="src\localization.h" />
-    <ClInclude Include="src\Net_exceptions.h" />
+    <ClInclude Include="src\Net_exception.h" />
     <ClInclude Include="src\packet.h" />
     <ClInclude Include="src\Point2d.h" />
     <ClInclude Include="src\Receiver.h" />
