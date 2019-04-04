@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "Point2d.h"
 
 
