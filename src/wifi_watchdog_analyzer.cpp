@@ -1,16 +1,10 @@
-#ifndef UNICODE
-#define UNICODE 1
-#endif
-
-
-#include "stdafx.h"
 #include <algorithm> /* std::foreach */
 #include <stdexcept>
 #include <utility>
 #include "Conf.h"
 #include "Dealer.h"
-#include "database.h"
-#include "db_exception.h"
+#include "db.h"
+#include "utils.h"
 #include "Collector.h"
 #include "localization.h"
 

@@ -27,9 +27,6 @@
     <ClCompile Include="src\Receiver.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\stdafx.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\wifi_watchdog_analyzer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -44,25 +41,10 @@
     <ClInclude Include="src\localization.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\packet.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\Point2d.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\Receiver.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\sqlite3.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\stdafx.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\targetver.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\device.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\Conf_exception.h">

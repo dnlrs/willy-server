@@ -1,3 +1,5 @@
+#ifndef PACKET_H_INCLUDED
+#define PACKET_H_INCLUDED
 #pragma once
 /*
  * packet.h
@@ -9,8 +11,6 @@
 #include <cstdint> /* for uint64_t */
 #include <sstream>
 #include <winsock2.h>
-#include <time.h>
-#include <vector>
 
 
 #define MAC_LENGTH 6
@@ -42,47 +42,18 @@ typedef struct
 /* should be inline because when we include this header inside different source files we create multiple definition for that function */
 inline std::string mactos(mac_t macaddr)
 {
-	std::stringstream ss;
-	for (int i = 0; i < MAC_LENGTH; i++)
-	{
-		if ( !(macaddr.raw_mac[i] & 0xF0) ) //if the leading digit of a couple is 0 ==> insert it manually
-			ss << '0';
-		ss << std::hex << (size_t)macaddr.raw_mac[i];
-		if(i < MAC_LENGTH - 1)
-			ss << ':';
-	}
-	return ss.str();
+    std::stringstream ss;
+    for (int i = 0; i < MAC_LENGTH; i++)
+    {
+        if (!(macaddr.raw_mac[i] & 0xF0)) //if the leading digit of a couple is 0 ==> insert it manually
+            ss << '0';
+        ss << std::hex << (size_t)macaddr.raw_mac[i];
+        if (i < MAC_LENGTH - 1)
+            ss << ':';
+    }
+    return ss.str();
 }
 
-inline std::string timetos(struct tm time)
-{
-	std::string rval;
-    std::vector<std::string> days {
-        "Sunday", "Monday", "Tuesday","Wednesday", 
-        "Thursday", "Friday","Saturday"
-    };
-    std::vector<std::string> months {
-        "January", "February", "March", "April",
-        "May", "June", "July", "August",
-        "September", "October", "November", "December"
-    };
-	
-    rval += days[time.tm_wday] + ", " + months[time.tm_mon] + " " 
-            + std::to_string(time.tm_mday) + ", " 
-            + std::to_string(1900+time.tm_year) + " " 
-            + std::to_string(time.tm_hour) + ":" 
-            + std::to_string(time.tm_min) + ":" 
-            + std::to_string(time.tm_sec);
-	
-    return rval;
-}
-
-inline struct tm epochTotm(const time_t rawtime)
-{
-	struct tm ptm;
-	localtime_s(&ptm, &rawtime);
-	return ptm;
-}
 
 PACKET_T inline deserialize(char *buf) {
 	uint32_t channel;
@@ -148,3 +119,5 @@ PACKET_T inline deserialize(char *buf) {
 
 	return pack;
 }
+#endif // !PACKET_H_INCLUDED
+
