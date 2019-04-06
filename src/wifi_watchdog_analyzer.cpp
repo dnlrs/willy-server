@@ -200,7 +200,7 @@ int main()
 
 	try 
 	{
-		dealer.setup_listeningS();
+		dealer.setup_listening_socket();
 		dealer.connect_to_all(); /* open first connections */
 	}
 	catch (Sock_exception& sock_e)

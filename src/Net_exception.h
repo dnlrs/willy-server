@@ -1,8 +1,27 @@
+#ifndef NET_EXCEPTION_H_INCLUDED
+#define NET_EXCEPTION_H_INCLUDED
 #pragma once
 
 #include <string>
+#include "logger.h"
 
 using namespace std;
+
+class net_exception :
+    public std::exception
+{
+public:
+    net_exception() : errmsg("NET_ERROR: unknown") { 
+        debuglog(errmsg); 
+    }
+    net_exception(std::string msg) : errmsg("NET_ERROR: " + msg) {
+        debuglog(errmsg); 
+    }
+
+    virtual const char* what() const throw() { return (this->errmsg.c_str()); }
+private:
+    std::string errmsg;
+};
 
 //invalid socket: when recv() is locked and the dealer fixes the socket, this exception is raised
 class Sock_exception : public std::exception
@@ -52,3 +71,5 @@ private:
 	string errmsg;
 
 };
+
+#endif // !NET_EXCEPTION_H_INCLUDED

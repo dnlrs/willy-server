@@ -1,12 +1,17 @@
+#ifndef DEALER_H_INCLUDED
+#define DEALER_H_INCLUDED
 #pragma once
-#include <winsock2.h>
+
+#include "wwsadata.h"
+#include "packet.h"
+#include "anchor.h"
 #include <map>
 #include <memory>
 #include <mutex>
 #include <list>
+#include <winsock2.h>
 #include "Net_exception.h"
 #include "Receiver.h"
-#include "packet.h"
 
 #define SERVICE_PORT 27015 /* port used for the connection with the receivers */
 
@@ -17,10 +22,21 @@
 class Dealer
 {
 public:
-	Dealer(vector<Receiver>& receivers) : listenSocket(INVALID_SOCKET), recvs(receivers), fatal_error(false){}
-	~Dealer() { closesocket(listenSocket); }
-	// it setups the listenSocket for the server
-	void setup_listeningS();
+
+    Dealer();
+
+    // reads configuration file
+    void init();
+    void start();
+    void stop();
+
+private:
+	// it setups the listening_socket for the server
+	void setup_listening_socket();
+
+
+	Dealer(vector<Receiver>& receivers) : listening_socket(INVALID_SOCKET), recvs(receivers), fatal_error(false){}
+	~Dealer() { closesocket(listening_socket); }
 	// it waits for all the boards, accept their connection requests and initialize each receiver's socket
 	void connect_to_all();
 	// checks if the ip belongs to one of the expected boards
@@ -34,12 +50,21 @@ public:
 	//it says if fatal_error is set
 	boolean in_err();
 	//closes the listening socket
-	void close_listening() { closesocket(this->listenSocket); }
+	void close_listening() { closesocket(this->listening_socket); }
     //returns positions of all connected anchors
     std::map<uint64_t, Point2d> get_anchor_positions();
 
+
+
 private:
-	SOCKET listenSocket;
+    wwsadata data;
+
+private:
+	SOCKET listening_socket;
+    //std::map<uint64_t, Point2d> anchor_positions;
+    std::vector<anchor>      configured_anchors;
+    std::map<SOCKET, anchor> connected_anchors;
+
 	vector<Receiver>& recvs;
 	mutex printMtx;
 	mutex fatalErrMtx;
@@ -48,3 +73,4 @@ private:
     std::mutex recvs_mtx;
 };
 
+#endif // !DEALER_H_INCLUDED

@@ -1,42 +1,65 @@
 #include "Dealer.h"
-
-
-
-void Dealer::setup_listeningS()
+#include "utils.h"
+Dealer::Dealer()
 {
-	stringstream fail;
-	//----------------------
-	// Create a SOCKET for listening for
-	// incoming connection requests.
 
-	this->listenSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-	if (listenSocket == INVALID_SOCKET) {
-		fail << "socket failed with error: " << WSAGetLastError() << " -- [Listening Socket]";
-		throw Sock_exception(fail.str());
-	}
-	//----------------------
-	// The sockaddr_in structure specifies the address family,
-	// IP address, and port for the socket that is being bound.
-	sockaddr_in service;
-	service.sin_family = AF_INET;
+}
+
+
+void Dealer::init()
+{
+    //TODO: read configuration file
+    setup_listening_socket();
+}
+void Dealer::start()
+{
+
+}
+void Dealer::stop()
+{
+
+}
+
+void Dealer::setup_listening_socket()
+{
+    if (listening_socket != INVALID_SOCKET)
+        throw net_exception("listening socket should be invalid");
+
+    int err = SOCKET_ERROR;
+	
+	// Create a SOCKET for listening for incoming connection requests
+	listening_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+	if (listening_socket == INVALID_SOCKET) 
+        throw net_exception(
+            "listening_socket creation fail\n" + wsa_etos(WSAGetLastError()));
+	
+	/*
+     * The sockaddr_in structure specifies the address family, IP address, 
+     * and port for the socket that is being bound.
+	 */
+	struct sockaddr_in service;
+    memset(&service, 0, sizeof(service));
+
 	service.sin_addr.s_addr = INADDR_ANY;
-	service.sin_port = htons(SERVICE_PORT);
+	service.sin_port        = htons(SERVICE_PORT);
+	service.sin_family      = AF_INET;
 
-	if (::bind(this->listenSocket,
-		(SOCKADDR *)& service, sizeof(service)) == SOCKET_ERROR) {
-		this->listenSocket = INVALID_SOCKET; //reset the socket
-		fail << "bind failed with error: " << WSAGetLastError() << " -- [Listening Socket]";
-		closesocket(listenSocket);
-		throw Sock_exception(fail.str());
+    // Bind socket
+    err = ::bind(listening_socket, (const sockaddr *)&service, sizeof(service));
+	if (err == SOCKET_ERROR) {
+        closesocket(listening_socket);
+		listening_socket = INVALID_SOCKET;
+        throw net_exception(
+            "listening_socket bind fail\n" + wsa_etos(WSAGetLastError()));
 	}
-	//----------------------
-	// Listen for incoming connection requests.
-	// on the created socket
-	if (listen(this->listenSocket, 1) == SOCKET_ERROR) {
-		this->listenSocket = INVALID_SOCKET; //reset the socket
-		fail << "listen failed with error: " << WSAGetLastError() << " -- [Listening Socket]";
-		closesocket(listenSocket);
-		throw Sock_exception(fail.str());
+	
+	// Listen for incoming connection requests
+    err = ::listen(listening_socket, SOMAXCONN);
+	if (err == SOCKET_ERROR) {
+		closesocket(listening_socket);
+		listening_socket = INVALID_SOCKET;
+        throw net_exception(
+            "listening_socket liste fail\n" + wsa_etos(WSAGetLastError()));
 	}
 }
 
@@ -74,7 +97,7 @@ void Dealer::connect_to_all()
 		addrlen = sizeof(struct sockaddr_in);
 		//clear the structure
 		memset(&accAddr, 0, addrlen);
-		acceptSocket = accept(this->listenSocket, (SOCKADDR *)&accAddr, &addrlen);
+		acceptSocket = accept(this->listening_socket, (SOCKADDR *)&accAddr, &addrlen);
 		if (acceptSocket == INVALID_SOCKET) {
 			fail << "accept failed";
 			throw Sock_exception(fail.str());
@@ -156,7 +179,7 @@ void Dealer::accept_incoming_req()
 		addrlen = sizeof(struct sockaddr_in);
 		//clear the structure
 		memset(&accAddr, 0, addrlen);
-		acceptSocket = accept(this->listenSocket, (SOCKADDR *)&accAddr, &addrlen);
+		acceptSocket = accept(this->listening_socket, (SOCKADDR *)&accAddr, &addrlen);
 		if (acceptSocket == INVALID_SOCKET) 
 		{
 			this->printMtx.lock();
