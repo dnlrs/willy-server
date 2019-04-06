@@ -11,9 +11,11 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\anchor.h" />
     <ClInclude Include="include\device.h" />
     <ClInclude Include="include\packet.h" />
     <ClInclude Include="include\utils.h" />
+    <ClInclude Include="include\wwsadata.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\utils.cpp" />
