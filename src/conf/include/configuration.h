@@ -7,7 +7,7 @@
 #include <mutex>
 #include <utility>
 
-#define DEFAULT_CONFIGURATION_FILE  "willy_properties.xml"
+#define DEFAULT_CONFIGURATION_FILE  "conf.xml"
 #define net_server_port             "net_server_port"
 #define net_server_port_value       "27015"
 

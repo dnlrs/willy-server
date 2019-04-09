@@ -70,6 +70,9 @@
     <ClInclude Include="src\wARPtable.h" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="src\conf\conf.vcxproj">
+      <Project>{93cd3a4b-f7f5-4fea-8fbe-5908ecc84462}</Project>
+    </ProjectReference>
     <ProjectReference Include="src\db\db.vcxproj">
       <Project>{a9075ba3-27f2-471d-9c19-40c13ba9e9e9}</Project>
     </ProjectReference>
