@@ -5,6 +5,7 @@
 #include "wwsadata.h"
 #include "packet.h"
 #include "anchor.h"
+#include "cfg.h"
 #include <map>
 #include <memory>
 #include <mutex>
@@ -24,25 +25,61 @@ class Dealer
 public:
 
     Dealer();
+    ~Dealer();
 
-    // reads configuration file
-    void init();
+    /* reads configuration file */
+    void init(std::string conf_file);
     void start();
     void stop();
 
 private:
-	// it setups the listening_socket for the server
+	/* Setups the listening_socket for the server */
 	void setup_listening_socket();
 
+    /* Connects to all anchors */
+    void connect_all_anchors();
+
+    /* Manages an incoming anchor connection request
+     * 
+     * This may block indefinitively if no anchor 
+     * tries to connect. 
+     * In the anchor returned only the mac address
+     * and the IP address are valid, position will 
+     * be (0,0)
+     */
+    anchor connect_anchor(SOCKET* rsocket);
+
+    /* Sends an ACK to a newly connected anchor */
+    void send_connection_ack(
+        const SOCKET anchor_socket);
+    
+    /* sets the SO_KEEPALIVE option */
+    void set_keepalive_option(
+        const SOCKET anchor_socket);
+
+    /* Adds a new connected anchor
+     * 
+     * If the new anchor had already a previous opened 
+     * connection on another socket, that connection is 
+     * is closed and removed and the new connection is 
+     * saved
+     */
+    void add_connected_anchor(
+        const SOCKET new_socket, 
+        const anchor new_anchor);
+    
+    /* Removes a previously connected anchor 
+     *
+     * If the old socket is not invalid socket, then
+     * this function takes also care about shutting down
+     * and closing the socket. If any of these operations
+     * go wrong throws net_exception.
+     */
+    void remove_connected_anchor(
+        const uint64_t anchor_mac);
 
 	Dealer(vector<Receiver>& receivers) : listening_socket(INVALID_SOCKET), recvs(receivers), fatal_error(false){}
-	~Dealer() { closesocket(listening_socket); }
-	// it waits for all the boards, accept their connection requests and initialize each receiver's socket
-	void connect_to_all();
-	// checks if the ip belongs to one of the expected boards
-	int check_if_valid_board(const u_long& ip, const PMIB_IPNET_TABLE2& arpTable, const vector<Receiver>& receivers, const size_t nrecv);
-	//listen on the listening socket for incoming connection requests. It grants the access only for authorized devices
-	void accept_incoming_req();
+
 	//returns the print mutex object
 	mutex& getprintMtx() { return this->printMtx; }
 	//it closes all the receivers socket and notify them to exit. Call it in order to close the server
@@ -60,10 +97,15 @@ private:
     wwsadata data;
 
 private:
-	SOCKET listening_socket;
-    //std::map<uint64_t, Point2d> anchor_positions;
-    std::vector<anchor>      configured_anchors;
-    std::map<SOCKET, anchor> connected_anchors;
+    cfg::configuration context;
+	SOCKET listening_socket = INVALID_SOCKET;
+
+private:
+    std::map<uint64_t, anchor>  anchors;        // {mac, anchor}
+    std::map<uint64_t, SOCKET>  mac_to_socket;  // {mac, socket}
+    std::map<SOCKET, uint64_t>  socket_to_mac;  // {socket, mac}
+    std::recursive_mutex        anchors_rmtx;
+
 
 	vector<Receiver>& recvs;
 	mutex printMtx;

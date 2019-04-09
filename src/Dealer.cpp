@@ -1,19 +1,44 @@
-#include "Dealer.h"
+#include "dealer.h"
 #include "utils.h"
+#include "wARPtable.h"
+
+
 Dealer::Dealer()
 {
 
 }
 
-
-void Dealer::init()
+Dealer::~Dealer()
 {
-    //TODO: read configuration file
+
+}
+
+
+void Dealer::init(std::string conf_file)
+{
+    // read configuration
+    context.import_configuration(conf_file, true);
+    if (context.get_anchors_number() == 0)
+        throw net_exception("No anchors found in configuration file");
+
+    // setup listening socket
     setup_listening_socket();
 }
+
+
 void Dealer::start()
 {
+    // start receiver thread
+        // starts doing select on available sockets
+        // if dealer says to ignore packets, ignores packets
+    // start worker threads
+        // waits on queue for packets to deserialize
+        // deserializes packets, localizes devices, inserts packets into database
+    // start dealer thread
 
+    // connect all anchors
+    // connect_all_anchors();
+    // "go" to receiver thread
 }
 void Dealer::stop()
 {
@@ -25,18 +50,13 @@ void Dealer::setup_listening_socket()
     if (listening_socket != INVALID_SOCKET)
         throw net_exception("listening socket should be invalid");
 
-    int err = SOCKET_ERROR;
-	
 	// Create a SOCKET for listening for incoming connection requests
 	listening_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 	if (listening_socket == INVALID_SOCKET) 
         throw net_exception(
             "listening_socket creation fail\n" + wsa_etos(WSAGetLastError()));
 	
-	/*
-     * The sockaddr_in structure specifies the address family, IP address, 
-     * and port for the socket that is being bound.
-	 */
+	// local endpoint parameters for listening socket (addr. family, IP, port)
 	struct sockaddr_in service;
     memset(&service, 0, sizeof(service));
 
@@ -45,7 +65,8 @@ void Dealer::setup_listening_socket()
 	service.sin_family      = AF_INET;
 
     // Bind socket
-    err = ::bind(listening_socket, (const sockaddr *)&service, sizeof(service));
+    int err = SOCKET_ERROR;
+    err = ::bind(listening_socket, (const sockaddr*) &service, sizeof(service));
 	if (err == SOCKET_ERROR) {
         closesocket(listening_socket);
 		listening_socket = INVALID_SOCKET;
@@ -63,187 +84,157 @@ void Dealer::setup_listening_socket()
 	}
 }
 
-void Dealer::connect_to_all()
+void Dealer::connect_all_anchors()
 {
-	int iResult;
-	stringstream fail;
+    int anchors_number = context.get_anchors_number();
+    bool rs = false;
 
-	// Create a SOCKET for accepting incoming requests.
-	SOCKET acceptSocket = INVALID_SOCKET;
-	cout << "Waiting for clients to connect..." << endl;
+    debuglog("Waiting for ", anchors_number, " to connect...");
+    while (anchors_number > 0) {
+        
+        SOCKET new_socket = INVALID_SOCKET;
+        anchor new_anchor = connect_anchor(&new_socket);
 
-	//----------------------
-	// ARP chache table 	
-	unsigned long status;
-	PMIB_IPNET_TABLE2 pipTable = NULL;
-	status = GetIpNetTable2(AF_INET, &pipTable);
-	if (status != NO_ERROR) {
-		printf("GetIpNetTable for IPv4 table returned error: %ld\n", status);
-		exit(-1); // radical error
-	}
+        std::pair<double, double> new_anchor_position(0, 0);
+        rs = context.get_anchor_position(
+                            new_anchor.get_mac(), new_anchor_position);
+        if (rs == true) {
+            // anchor was found in configuration file
+            new_anchor.set_position(new_anchor_position);
+            add_connected_anchor(new_socket, new_anchor);
 
-	//----------------------
-	// Accept the connection.
-
-	struct sockaddr_in accAddr;
-	socklen_t addrlen;
-	list<uint64_t> guest_list;
-	for (Receiver r : this->recvs)
-		guest_list.push_back(r.m_mac().compacted_mac);
-	size_t missingboards = this->recvs.size();
-	size_t checkedboard = 0;
-	while (checkedboard < missingboards)
-	{
-		addrlen = sizeof(struct sockaddr_in);
-		//clear the structure
-		memset(&accAddr, 0, addrlen);
-		acceptSocket = accept(this->listening_socket, (SOCKADDR *)&accAddr, &addrlen);
-		if (acceptSocket == INVALID_SOCKET) {
-			fail << "accept failed";
-			throw Sock_exception(fail.str());
-		}
-
-		/* check if this ip corresponds to a valid board and insert the AcceptSocket into the correspondant Receiver object */
-		iResult = check_if_valid_board(accAddr.sin_addr.S_un.S_addr, pipTable, this->recvs, this->recvs.size());
-		if (iResult == -1) //not valid board
-		{
-			closesocket(acceptSocket);
-			continue;
-		}
-		if (this->recvs[iResult].has_valid_socket())
-			closesocket(this->recvs[iResult].m_sock()); //close socket to avoid multiple accept to leave multiple opened socket
-		this->recvs[iResult].set_sock(acceptSocket);
-
-		uint32_t ack = 1;
-		size_t bytes = send(recvs[iResult].m_sock(), (char *)&ack, sizeof(uint32_t), 0);
-		if (bytes < 0)
-			exit(-1);
-		cout << "Receiver <" << mactos(recvs[iResult].m_mac()) << "> started." << endl;
-
-		
-		//search for the connected board, if this one were already accepted do not count it as a new checkedboard
-		auto it = std::find(guest_list.begin(), guest_list.end(), this->recvs[iResult].m_mac().compacted_mac);
-		if(it == guest_list.end())
-			cout << "++ Receiver <" << mactos(this->recvs[iResult].m_mac()) << "> reconnected. ++" << endl;
-		else
-		{
-			guest_list.erase(it); //remove the new connected board from the guest_list
-			cout << "Receiver <" << mactos(this->recvs[iResult].m_mac()) << "> connected." << endl;
-			checkedboard++;
-		}
-	}
-	
-	//send start to all the anchors
-	/*
-	uint32_t ack = 1;
-	for (Receiver recv : recvs)
-	{
-		size_t bytes = send(recv.m_sock(), (char *)&ack, sizeof(uint32_t), 0);
-		if (bytes < 0)
-			exit(-1);
-		cout << "Receiver <" << mactos(recv.m_mac()) << "> started." << endl;
-	}
-	*/
-}
-
-void Dealer::accept_incoming_req()
-{
-	int iResult;
-	stringstream fail;
-
-	this->printMtx.lock();
-	cout << "-- [LISTENING THREAD] -- THREAD ID :" << this_thread::get_id() << ": listening thread is active" << endl;
-	this->printMtx.unlock();
-
-	// Create a SOCKET for accepting incoming requests.
-	SOCKET acceptSocket = INVALID_SOCKET;
-
-	//----------------------
-	// ARP chache table 	
-	unsigned long status;
-	PMIB_IPNET_TABLE2 pipTable = NULL;
-	status = GetIpNetTable2(AF_INET, &pipTable);
-	if (status != NO_ERROR) {
-		lock_guard<mutex> lg(this->printMtx);
-		printf("GetIpNetTable for IPv4 table returned error: %ld\n", status);
-		exit(-1); // radical error
-	}
-
-	//----------------------
-	// Accept the connection.
-	struct sockaddr_in accAddr;
-	socklen_t addrlen;
-
-	while (1)
-	{
-		addrlen = sizeof(struct sockaddr_in);
-		//clear the structure
-		memset(&accAddr, 0, addrlen);
-		acceptSocket = accept(this->listening_socket, (SOCKADDR *)&accAddr, &addrlen);
-		if (acceptSocket == INVALID_SOCKET) 
-		{
-			this->printMtx.lock();
-			cout << "-- [ERROR] -- THREAD ID " << this_thread::get_id() << " Accept failed - Listening thread is closing ...";
-			this->printMtx.unlock();
-			if (!this->in_err())
-				this->notify_fatal_err();
-			return;
-		}
-
-		/* check if this ip corresponds to a valid board and insert the AcceptSocket into the correspondant Receiver object */
-		iResult = check_if_valid_board(accAddr.sin_addr.S_un.S_addr, pipTable, this->recvs, this->recvs.size());
-		if (iResult == -1) //not valid board
-		{
-			closesocket(acceptSocket);
-			continue;
-		}
-		//sets the new socket
-        {
-            std::lock_guard<std::mutex> guard(recvs_mtx);
-		    SOCKET old_sock = this->recvs[iResult].m_sock();
-		    this->recvs[iResult].set_sock(acceptSocket);
-		    //closes socket to unlock the thread blocked on the recv()
-		    closesocket(old_sock);
+            anchors_number--;
+            debuglog("New anchor connected: ", mac_int2str(new_anchor.get_mac()));
         }
-		
-		uint32_t ack = 1;
-		size_t bytes = send(acceptSocket, (char *)&ack, sizeof(uint32_t), 0);
-		if (bytes <= 0)
-		{
-			this->printMtx.lock();
-			cout << "-- [ERROR] -- THREAD ID " << this_thread::get_id() << " Ack sending failed - Listening thread is closing ...";
-			this->printMtx.unlock();
-			if (!this->in_err())
-				this->notify_fatal_err();
-			return;
-		}
-		this->printMtx.lock();
-		cout << "-- [RECONNECTION] -- THREAD ID " << this_thread::get_id() << endl
-			<< "\t\tReceiver <" << mactos(this->recvs[iResult].m_mac()) << "> reconnected and started." << endl;
-		this->printMtx.unlock();
-	}
+        else {
+            throw net_exception("Anchor " + mac_int2str(new_anchor.get_mac()) + 
+                                " was not found in configuration file");
+        }
 
+    }
 }
 
-int Dealer::check_if_valid_board(const u_long& ip, const PMIB_IPNET_TABLE2& arpTable, const vector<Receiver>& receivers, const size_t nrecv)
+void 
+Dealer::add_connected_anchor(
+    const SOCKET new_socket, 
+    const anchor new_anchor)
 {
-	SIZE_T rentry,
-		currbyte;
-	for (ULONG currentry = 0; currentry < arpTable->NumEntries; currentry++)
-	{
-		if (ip != (arpTable->Table[currentry].Address.Ipv4.sin_addr.S_un.S_addr))
-			continue;
-		for (rentry = 0; rentry < nrecv; rentry++)
-		{
-			for (currbyte = 0; currbyte < MAC_LENGTH && currbyte < (unsigned char)arpTable->Table[currentry].PhysicalAddressLength; currbyte++)
-				if (receivers[rentry].m_mac().raw_mac[currbyte] != (unsigned char)arpTable->Table[currentry].PhysicalAddress[currbyte])
-					break;
-			if (currbyte == 6)  // correspondant board was found
-				return (int)rentry;
-		}
-	}
-	return -1;
+    if (new_socket == INVALID_SOCKET)
+        throw net_exception(
+            "Cannot add a new connected anchor with invalid socket");
+    
+    uint64_t anchor_mac = new_anchor.get_mac();
+    
+    std::lock_guard<std::recursive_mutex> guard(anchors_rmtx);
+    
+    if (anchors.find(anchor_mac) != anchors.end()) {
+        debuglog("Newly connected anchor was connected previously");
+        remove_connected_anchor(anchor_mac);
+    }
+
+    anchors[anchor_mac]       = new_anchor;
+    mac_to_socket[anchor_mac] = new_socket;
+    socket_to_mac[new_socket] = anchor_mac;
 }
+
+void
+Dealer::remove_connected_anchor(
+    const uint64_t anchor_mac)
+{
+    std::lock_guard<std::recursive_mutex> guard(anchors_rmtx);
+    
+    SOCKET old_socket = mac_to_socket[anchor_mac];
+    anchors.erase(anchor_mac);
+    mac_to_socket.erase(anchor_mac);
+    socket_to_mac.erase(old_socket);
+
+    if (old_socket != INVALID_SOCKET) {
+        if (shutdown(old_socket, SD_SEND) == SOCKET_ERROR)
+            debuglog(
+                "shutdown socket error or UDP socket (no harm)\n",
+                wsa_etos(WSAGetLastError()));
+
+        if (closesocket(old_socket) == SOCKET_ERROR)
+            debuglog("closesocket error: ", wsa_etos(WSAGetLastError()));
+    }
+}
+
+anchor 
+Dealer::connect_anchor(SOCKET* rsocket)
+{
+    if (listening_socket == INVALID_SOCKET)
+        throw net_exception(
+            "Cannot connect anchor because listening socket is invalid");
+
+    *rsocket = INVALID_SOCKET;
+
+    // accept new connection
+    struct sockaddr_in anchor_sa;
+    int anchor_sa_size = sizeof(anchor_sa);
+    memset(&anchor_sa, 0, anchor_sa_size);
+
+    SOCKET new_socket = 
+        ::accept(listening_socket, (sockaddr*) &anchor_sa, &anchor_sa_size);
+
+    if (new_socket == INVALID_SOCKET)
+        throw net_exception("Accept failed while connecting an anchor\n" + 
+            wsa_etos(WSAGetLastError()));
+    
+    // get anchor mac
+    wARPtable arp_table;
+    uint64_t new_mac = arp_table.get_mac_from_ip(anchor_sa.sin_addr.s_addr);
+
+    // set socket option SO_KEEPALIVE
+    set_keepalive_option(new_socket);
+
+    // send connection ack
+    send_connection_ack(new_socket);
+
+    // return new socket and new anchor
+    *rsocket = new_socket;
+    return anchor(new_mac, anchor_sa.sin_addr.s_addr);
+}
+
+
+void 
+Dealer::set_keepalive_option(const SOCKET anchor_socket)
+{
+    if (anchor_socket == INVALID_SOCKET)
+        throw net_exception("Cannot set option on invalid socket");
+
+    int  err = SOCKET_ERROR;
+    bool opt_value = true;
+    
+    err = setsockopt(anchor_socket, SOL_SOCKET, SO_KEEPALIVE, 
+                     (const char*) &opt_value, sizeof(bool));
+    if (err == SOCKET_ERROR)
+        throw net_exception("Setting socket option KEEPALIVE failed\n" +
+            wsa_etos(WSAGetLastError()));
+}
+
+void 
+Dealer::send_connection_ack(const SOCKET anchor_socket)
+{
+    if (anchor_socket == INVALID_SOCKET)
+        throw net_exception("Cannot send connection ack on invalid socket");
+
+    uint32_t ack = 1;
+    uint32_t left_bytes = sizeof(ack);
+    const char *pbuf = (const char *) &ack;
+    
+    while (left_bytes > 0) {
+        uint32_t sent_bytes = 
+            ::send(anchor_socket, pbuf, left_bytes, 0);
+
+        if (sent_bytes == SOCKET_ERROR)
+            throw net_exception("Failed to send connection ACK\n" + 
+                                wsa_etos(WSAGetLastError()));
+
+        pbuf       += sent_bytes;
+        left_bytes -= sent_bytes;
+    }
+}
+
 
 void Dealer::notify_fatal_err()
 {
