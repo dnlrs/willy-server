@@ -26,6 +26,10 @@ std::string mac_int2str(const uint64_t mac);
 int mac_is_valid(const char* mac);
 
 
+// string format checking
+int str_is_valid_int(const char* str);
+int str_is_valid_double(const char* str);
+
 
 /* Formats WSA error to string */
 std::string wsa_etos(int error);

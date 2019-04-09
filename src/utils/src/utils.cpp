@@ -98,6 +98,36 @@ int mac_is_valid(const char* mac)
     return (i == 12 && (s == 5 || s == 0));
 }
 
+int
+str_is_valid_int(const char* str)
+{
+    if (!str) return 0;
+    while (*str) {
+        if (!isdigit(*str))
+            return 0;
+        ++str;
+    }
+
+    return 1;
+}
+
+int
+str_is_valid_double(const char* str)
+{
+    if (!str) return 0;
+
+    int v = 0;
+    while (*str) {
+        if (!isdigit(*str))
+            if (*str == ',' || *str == '.')
+                v++;
+            else
+                return 0;
+        ++str;
+    }
+
+    return (v == 1);
+}
 
 
 std::string
