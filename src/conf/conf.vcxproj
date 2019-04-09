@@ -31,6 +31,14 @@
     <ClInclude Include="src\xml_processor.h" />
     <ClInclude Include="src\xml_properties.h" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="README.md" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\utils\utils.vcxproj">
+      <Project>{9c21b822-3fbb-4a85-90ce-0812c07f6217}</Project>
+    </ProjectReference>
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{93CD3A4B-F7F5-4FEA-8FBE-5908ECC84462}</ProjectGuid>

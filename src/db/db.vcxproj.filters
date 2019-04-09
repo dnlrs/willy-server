@@ -9,6 +9,9 @@
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hh;hpp;hxx;hm;inl;inc;ipp;xsd</Extensions>
     </Filter>
+    <Filter Include="Doc Files">
+      <UniqueIdentifier>{9c8ed6f2-ea85-4b27-9e17-6fbe526afa91}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\database.cpp">
@@ -28,5 +31,10 @@
     <ClInclude Include="include\db.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="README.md">
+      <Filter>Doc Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

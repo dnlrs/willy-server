@@ -80,6 +80,10 @@
       <Project>{9c21b822-3fbb-4a85-90ce-0812c07f6217}</Project>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="README.md" />
+    <None Include="SETUP_VS_PROJECT.md" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

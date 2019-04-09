@@ -24,6 +24,9 @@
       <Project>{9c21b822-3fbb-4a85-90ce-0812c07f6217}</Project>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="README.md" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{A9075BA3-27F2-471D-9C19-40C13BA9E9E9}</ProjectGuid>

@@ -9,6 +9,9 @@
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hh;hpp;hxx;hm;inl;inc;ipp;xsd</Extensions>
     </Filter>
+    <Filter Include="Doc Files">
+      <UniqueIdentifier>{dfa76ed1-6600-409a-8bb0-0722e5423151}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\configuration.cpp">
@@ -64,5 +67,10 @@
     <ClInclude Include="ext\rapidxml\rapidxml_utils.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="README.md">
+      <Filter>Doc Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

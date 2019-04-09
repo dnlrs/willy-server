@@ -20,6 +20,9 @@
   <ItemGroup>
     <ClCompile Include="src\utils.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="README.md" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{9C21B822-3FBB-4A85-90CE-0812C07F6217}</ProjectGuid>

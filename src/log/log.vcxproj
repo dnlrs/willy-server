@@ -22,6 +22,9 @@
     <ClCompile Include="src\log_policy_file.cpp" />
     <ClCompile Include="src\log_policy_std.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="README.md" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{3B6CE533-210E-43E4-A884-A6826C8DACBE}</ProjectGuid>
