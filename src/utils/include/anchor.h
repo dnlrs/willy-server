@@ -62,6 +62,15 @@ public:
         return *this;
     }
 
+    anchor& operator=(const anchor& other)
+    {
+        mac = other.mac;
+        addr = other.addr;
+        position_x = other.position_x;
+        position_y = other.position_y;
+
+        return *this;
+    }
 
     uint64_t get_mac() const { return mac; }
 
