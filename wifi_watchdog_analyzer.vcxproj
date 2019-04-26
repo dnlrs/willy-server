@@ -14,7 +14,7 @@
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{C23F8814-7BE5-4F64-A00E-DB323782A094}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <WindowsTargetPlatformVersion>10.0.17134.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
@@ -56,6 +56,7 @@
     <ClCompile Include="src\Dealer.cpp" />
     <ClCompile Include="src\Point2d.cpp" />
     <ClCompile Include="src\Receiver.cpp" />
+    <ClCompile Include="src\socket_utils.cpp" />
     <ClCompile Include="src\wARPtable.cpp" />
     <ClCompile Include="src\wifi_watchdog_analyzer.cpp" />
   </ItemGroup>
@@ -64,9 +65,12 @@
     <ClInclude Include="src\Conf_exception.h" />
     <ClInclude Include="src\Dealer.h" />
     <ClInclude Include="src\localization.h" />
-    <ClInclude Include="src\Net_exception.h" />
+    <ClInclude Include="src\net_exception.h" />
     <ClInclude Include="src\Point2d.h" />
     <ClInclude Include="src\Receiver.h" />
+    <ClInclude Include="src\recv_exception.h" />
+    <ClInclude Include="src\socket_utils.h" />
+    <ClInclude Include="src\sock_exception.h" />
     <ClInclude Include="src\wARPtable.h" />
   </ItemGroup>
   <ItemGroup>

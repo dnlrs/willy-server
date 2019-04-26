@@ -33,6 +33,9 @@
     <ClCompile Include="src\wARPtable.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\socket_utils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Conf.h">
@@ -53,10 +56,19 @@
     <ClInclude Include="src\Conf_exception.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\Net_exception.h">
+    <ClInclude Include="src\wARPtable.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\wARPtable.h">
+    <ClInclude Include="src\socket_utils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\net_exception.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\recv_exception.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\sock_exception.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
