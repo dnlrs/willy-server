@@ -1,123 +1,64 @@
 #ifndef PACKET_H_INCLUDED
 #define PACKET_H_INCLUDED
 #pragma once
-/*
- * packet.h
- *
- *  Created on: 03 mag 2018
- */
 
-
+#include "utils.h"
 #include <cstdint> /* for uint64_t */
 #include <sstream>
 #include <winsock2.h>
-
 
 #define MAC_LENGTH 6
 #define MD5_HASH_LENGTH 32
 #define MAX_SSID_LENGTH 32
 
+class packet {
 
+public:
 
-union mac_t
-{
-	unsigned char raw_mac[MAC_LENGTH];
-	uint64_t compacted_mac : 48;
+    packet(
+        uint32_t in_channel, 
+        int32_t  in_rssi,
+        uint32_t in_sequence_ctrl, 
+        uint32_t in_ssid_length,
+        uint64_t in_timestamp, 
+        uint64_t in_device_mac,
+        uint64_t in_anchor_mac, 
+        std::string in_ssid,
+        std::string in_hash) :
+            channel(in_channel),
+            rssi(in_rssi),
+            sequence_ctrl(in_sequence_ctrl),
+            ssid_length(in_ssid_length),
+            timestamp(in_timestamp),
+            device_mac(in_device_mac),
+            anchor_mac(in_anchor_mac),
+            ssid(in_ssid),
+            hash(in_hash) {}
+
+    std::string to_string() 
+    {
+        return std::string(
+            "device mac: "     + mac_int2str(device_mac) +
+            " rssi: "          + std::to_string(rssi) +
+            (anchor_mac != 0 ? ("anchor mac: " + mac_int2str(anchor_mac)) : "") +
+            (ssid_length > 0 ? (" ssid: " + ssid) : "ssid: none") +
+            " channel: "       + std::to_string(channel) +
+            " sequence_ctrl: " + std::to_string(sequence_ctrl) +
+            " hash: " + hash);
+    }
+
+    uint32_t channel;
+    int32_t  rssi;
+    uint32_t sequence_ctrl;
+    uint32_t ssid_length;
+    uint64_t timestamp;
+    
+    uint64_t device_mac;
+    uint64_t anchor_mac = 0; // placeholder
+
+    std::string ssid;
+    std::string hash;
 };
 
-typedef struct
-{
-	uint32_t channel;
-	int32_t rssi;
-	uint32_t sequence_ctrl;
-	uint32_t timestamp; // TODO: make this uint64_t
-	uint32_t ssid_lenght;
-	mac_t mac_addr;
-    mac_t anchor_mac; // placeholder
-	std::string ssid;
-	std::string hash;
-} PACKET_T;
-
-
-/* should be inline because when we include this header inside different source files we create multiple definition for that function */
-inline std::string mactos(mac_t macaddr)
-{
-    std::stringstream ss;
-    for (int i = 0; i < MAC_LENGTH; i++)
-    {
-        if (!(macaddr.raw_mac[i] & 0xF0)) //if the leading digit of a couple is 0 ==> insert it manually
-            ss << '0';
-        ss << std::hex << (size_t)macaddr.raw_mac[i];
-        if (i < MAC_LENGTH - 1)
-            ss << ':';
-    }
-    return ss.str();
-}
-
-
-PACKET_T inline deserialize(char *buf) {
-	uint32_t channel;
-	uint32_t rssi;
-	uint32_t sequence_ctrl;
-	uint32_t timestamp;
-	uint32_t ssid_length;
-	char mac_addr[MAC_LENGTH];
-	char ssid[MAX_SSID_LENGTH + 1];
-	char hash[MD5_HASH_LENGTH + 1];
-
-	uint32_t *buf_int = (uint32_t *)buf;
-	channel = ntohl(*buf_int); //CHANNEL
-	buf_int++;
-	rssi = ntohl(*buf_int); //RSSI
-	buf_int++;
-	sequence_ctrl = ntohl(*buf_int); //SEQUENCE CTRL
-	buf_int++;
-	timestamp = ntohl(*buf_int); //TIMESTAMP
-	buf_int++;
-	ssid_length = ntohl(*buf_int); //SSID LENGTH
-	buf_int++;
-
-	char *buf_c = (char *)buf_int;
-
-	for (uint32_t i = 0; i < MAC_LENGTH; i++) {
-		mac_addr[i] = *buf_c;
-		buf_c++;
-	}
-
-	for (uint32_t i = 0; i < MD5_HASH_LENGTH; i++) {
-		hash[i] = *buf_c;
-		buf_c++;
-	}
-	hash[MD5_HASH_LENGTH] = '\0';
-
-	for (uint32_t i = 0; i < ssid_length; i++) {
-		ssid[i] = *buf_c;
-		buf_c++;
-	}
-	ssid[ssid_length] = '\0';
-
-	/*printf("CH=%d, RSSI=%02d, MAC=%02x:%02x:%02x:%02x:%02x:%02x, SSID=%s, SEQ=%d, TIMESTAMP: %d, HASH=%s\n",
-		channel,
-		rssi,
-		(uint8_t)mac_addr[0], (uint8_t)mac_addr[1], (uint8_t)mac_addr[2],
-		(uint8_t)mac_addr[3], (uint8_t)mac_addr[4], (uint8_t)mac_addr[5],
-		ssid,
-		sequence_ctrl,
-		timestamp,
-		hash
-	);*/
-
-	PACKET_T pack;
-	pack.channel = channel;
-	pack.rssi = rssi;
-	for(int i = 0; i < MAC_LENGTH; i ++)
-		pack.mac_addr.raw_mac[i] = mac_addr[i];
-	pack.ssid = std::string(ssid);
-	pack.sequence_ctrl = sequence_ctrl;
-	pack.timestamp = timestamp;
-	pack.hash = hash;
-
-	return pack;
-}
 #endif // !PACKET_H_INCLUDED
 
