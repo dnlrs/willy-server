@@ -1,5 +1,7 @@
 #include "socket_utils.h"
 #include "net_exception.h"
+#include "recv_exception.h"
+#include "sock_exception.h"
 #include "utils.h"
 #include <cassert>
 #include <mstcpip.h>
@@ -10,7 +12,7 @@ set_keepalive_option(
     const SOCKET anchor_socket)
 {
     if (anchor_socket == INVALID_SOCKET)
-        throw net_exception("Cannot set option on invalid socket");
+        throw sock_exception("Cannot set option on invalid socket");
 
     int err = SOCKET_ERROR;
 
@@ -41,8 +43,8 @@ set_keepalive_option(
 #endif // !_WIN32
 
     if (err == SOCKET_ERROR)
-        throw net_exception("Setting socket option KEEPALIVE failed\n" +
-            wsa_etos(WSAGetLastError()));
+        throw sock_exception(
+            "Setting socket option KEEPALIVE failed\n", WSAGetLastError());
 }
 
 
@@ -51,15 +53,14 @@ set_non_blocking_socket(
     const SOCKET socket_in)
 {
     if (socket_in == INVALID_SOCKET)
-        throw net_exception("Cannot set non blocking an invalid socket");
+        throw sock_exception("Cannot set non blocking an invalid socket");
 
-    int err = SOCKET_ERROR;
     u_long mode = 1;
-    err = ioctlsocket(socket_in, FIONBIO, &mode);
+    int err = ioctlsocket(socket_in, FIONBIO, &mode);
 
     if (err == SOCKET_ERROR)
-        throw net_exception("Cannot set non-blocking mode on socket\n" +
-            wsa_etos(WSAGetLastError()));
+        throw sock_exception(
+            "Cannot set non-blocking mode on socket\n", WSAGetLastError());
 }
 
 
@@ -69,7 +70,7 @@ read_sized_message(
     const SOCKET raw_socket)
 {
     if (raw_socket == INVALID_SOCKET)
-        throw net_exception(
+        throw sock_exception(
             "read_sized_message: parameter must be valid socket");
     
     uint8_t buf[default_buffer_size];
@@ -85,9 +86,10 @@ read_sized_message(
     uint32_t msg_length = ntohl((uint32_t)buf[0]);
     if (msg_length > default_buffer_size)
         throw net_exception(
-            "read_sized_message: "
-            "message length is greater than buffer size");
-    memset(&buf, 0, 4);
+            "read_sized_message: msg length is greater than buffer size");
+    
+    // reset first 4 bytes 
+    *((uint32_t*) &buf[0]) = 0;
 
     // read actual message
     read_bytes = read_n(&(buf[0]), msg_length, raw_socket);
@@ -123,7 +125,7 @@ read_n(
                 attempts--;
             }
             else {
-                throw net_exception("read_n: recv failed\n" + wsa_etos(wsa_err));
+                throw recv_exception("read_n: recv failed\n" + wsa_etos(wsa_err));
             }
         }
         else {
