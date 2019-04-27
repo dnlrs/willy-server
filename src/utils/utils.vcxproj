@@ -12,12 +12,17 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\anchor.h" />
+    <ClInclude Include="include\sync_queue.h" />
     <ClInclude Include="include\device.h" />
     <ClInclude Include="include\packet.h" />
+    <ClInclude Include="include\packet_shunter.h" />
+    <ClInclude Include="include\sized_buffer.hpp" />
     <ClInclude Include="include\utils.h" />
     <ClInclude Include="include\wwsadata.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\sync_queue.cpp" />
+    <ClCompile Include="src\packet_shunter.cpp" />
     <ClCompile Include="src\utils.cpp" />
   </ItemGroup>
   <ItemGroup>

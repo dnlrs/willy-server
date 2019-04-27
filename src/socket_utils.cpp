@@ -1,6 +1,5 @@
 #include "socket_utils.h"
 #include "net_exception.h"
-#include "recv_exception.h"
 #include "sock_exception.h"
 #include "utils.h"
 #include <cassert>
@@ -12,7 +11,8 @@ set_keepalive_option(
     const SOCKET anchor_socket)
 {
     if (anchor_socket == INVALID_SOCKET)
-        throw sock_exception("Cannot set option on invalid socket");
+        throw sock_exception(
+            "Cannot set option on invalid socket", anchor_socket);
 
     int err = SOCKET_ERROR;
 
@@ -53,7 +53,8 @@ set_non_blocking_socket(
     const SOCKET socket_in)
 {
     if (socket_in == INVALID_SOCKET)
-        throw sock_exception("Cannot set non blocking an invalid socket");
+        throw sock_exception(
+            "Cannot set non blocking an invalid socket", socket_in);
 
     u_long mode = 1;
     int err = ioctlsocket(socket_in, FIONBIO, &mode);
@@ -71,7 +72,7 @@ read_sized_message(
 {
     if (raw_socket == INVALID_SOCKET)
         throw sock_exception(
-            "read_sized_message: parameter must be valid socket");
+            "read_sized_message: parameter must be valid socket", raw_socket);
     
     uint8_t buf[default_buffer_size];
     memset(&buf, 0, default_buffer_size);
@@ -106,9 +107,9 @@ read_n(
     const uint32_t msg_length, 
     const SOCKET raw_socket)
 {
-    uint8_t* pmsg       = dst_buffer;
-    uint32_t left_bytes = msg_length;
-    uint32_t read_bytes = 0;
+    uint8_t* pmsg      = dst_buffer;
+    int32_t left_bytes = msg_length;
+    int32_t read_bytes = 0;
 
     long attempts = default_wouldblock_attempts;
 
@@ -125,15 +126,24 @@ read_n(
                 attempts--;
             }
             else {
-                throw recv_exception("read_n: recv failed\n" + wsa_etos(wsa_err));
+                throw sock_exception(
+                    "read_n: recv failed\n", wsa_err, raw_socket);
             }
         }
         else {
+
+            if (read_bytes == 0)
+                throw sock_exception(
+                    "read_n: socket has been closed by peer", raw_socket);
+
             pmsg       += read_bytes;
             left_bytes -= read_bytes;
             attempts    = default_wouldblock_attempts;
         }
     }
+
+    if (attempts <= 0)
+        throw sock_exception("read_n: socket/connection is dead", raw_socket);
 
     return (pmsg - dst_buffer);
 }

@@ -30,7 +30,14 @@ void set_non_blocking_socket(
  * 
  * First reads the numbers of bytes to be read (as uint32_t) then reads 
  * the actual bytes.
- * If an error occurs throws an exception.
+ * 
+ * Throws sock_exception if
+ *  - invalid input socket
+ *  - socket is too slow or dead connection (from read_n)
+ *  - recv call failed (from read_n)
+ * 
+ * Throws net_exception if
+ *  - message to be read is longer than local buffer
  * 
  * Returns the length of the read message.
  */
