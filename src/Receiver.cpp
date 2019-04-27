@@ -1,52 +1,116 @@
+#include "receiver.h"
+#include "utils.h"
+#include "sized_buffer.hpp"
+#include "socket_utils.h"
+#include "net_exception.h"
+#include "sock_exception.h"
+#include "recv_exception.h"
+#include <chrono>
+#include <thread>
 
-#include "Receiver.h"
 
+Receiver::Receiver(Dealer& dealer_ref, int anchors_nr) :
+    broker(dealer_ref),
+    disconnected_anchors(anchors_nr) 
+{
+    raw_packets_queue = std::make_shared<sync_queue>();
+}
 
 Receiver::~Receiver()
 {
-	/* destructor cannot throw exceptions */
-	closesocket(this->sock);
+    stop();
+    finish();
+}
+
+void Receiver::start()
+{
+    receiver_thread = std::thread(&service, this);
+}
+
+void Receiver::stop()
+{
+    stop_working = true;
+}
+
+void Receiver::finish()
+{   
+    if (receiver_thread.joinable())
+        receiver_thread.join();
+}
+
+void
+Receiver::notify_anchor_connected()
+{
+    disconnected_anchors--;
 }
 
 
-/* Define a data id to make possible a resend in case of error (??)*/
-PACKET_T Receiver::operator() ()
+void
+Receiver::service()
 {
-	uint32_t pack_size;
-	SSIZE_T bytes;
-    char recv_buff[2048];
-	string fail = string("recv() failed");
+    std::vector<SOCKET> active_sockets;
+    
+    // select timeout structure
+    struct timeval tm;
+    tm.tv_sec  = select_timeout_sec;
+    tm.tv_usec = select_timeout_usec;
+    
+    // select returned ready sockets
+    int n = 0;
+    
+    fd_set active_rset;
 
-	bytes = recv(this->sock, (char *)&pack_size, sizeof(uint32_t), 0);
-	if(bytes == 0) //connection closed by peer
-		throw Recv_exception(fail.append(": connection closed by peer"));
-	else if (bytes < 0) //invalid socket or connection closed
-		throw Sock_exception(fail);
-	
-	//char* recv_buff = nullptr;
-	//recv_buff = (char *)malloc(pack_size * sizeof(char));
-	//if (recv_buff == nullptr)
-	//{
-	//	cout << "memory error" << endl;
-	//	exit(-1);
-	//}
+    while (stop_working == false) {
+        active_sockets = broker.get_opened_sockets();
 
-	bytes = recv(this->sock, recv_buff, pack_size, 0);
-	if (bytes == 0) //connection closed by peer
-		throw Recv_exception(fail.append(": connection closed by peer"));
-	else if (bytes < 0) //invalid socket or connection closed
-		throw Sock_exception(fail);
+        if (active_sockets.size() == 0) {
+            std::this_thread::sleep_for(
+                std::chrono::milliseconds(default_sleep_ms));
+            continue; // no opened sockets exists
+        }
+    
+        FD_ZERO(&active_rset);
 
-	PACKET_T pack = deserialize(recv_buff);
-	return pack;
-}
+        for (SOCKET sock : active_sockets)
+            FD_SET(sock, &active_rset);
 
-boolean Receiver::has_valid_socket()
-{
-	int err = 0;
-	socklen_t size = sizeof(err);
-	int check = getsockopt(this->sock, SOL_SOCKET, SO_ERROR, (char *) &err, &size);
-	if (check != 0)
-		return false;
-	return true;
+        n = ::select(FD_SETSIZE, &active_rset, NULL, NULL, &tm);
+            
+        if (n == 0) {
+            // select timeout expired
+            continue; 
+        }
+
+        if (n == SOCKET_ERROR) {
+            /* select failed: this is a fatal error and under 
+             * normal conditions should not happen
+             **/
+            debuglog("receiver: select failed\n" + wsa_etos(WSAGetLastError()));
+            broker.notify_fatal_error();
+            stop_working = true;
+            continue;
+        }
+
+        /* read from each ready socket and store messages in the 
+         * shared fifo queue 
+         **/
+        try {
+            for (SOCKET sock : active_sockets) {
+                if (FD_ISSET(sock, &active_rset)) {
+                    sized_buffer buffer;
+                    buffer.msg_size   = read_sized_message(buffer.msg, sock);
+                    buffer.anchor_mac = broker.get_anchor_mac(sock);
+
+                    // save buffer only if all anchors are connected
+                    if (disconnected_anchors == 0)
+                        raw_packets_queue->push(buffer);
+                }
+            }
+        } catch (sock_exception& sock_ex) {
+            disconnected_anchors++;
+            broker.notify_anchor_disconnected(sock_ex.get_socket());
+        } catch (net_exception& net_ex) {
+            broker.notify_fatal_error();
+        }
+    }
 }
