@@ -18,7 +18,9 @@ class packet_shunter {
 
 public:
     /* note: also opens a satabase connection */
-    packet_shunter(int anchors_nr);
+    packet_shunter(
+        std::shared_ptr<cfg::configuration> context_in, 
+        int anchors_nr);
     ~packet_shunter();
 
     /* Adds a new packet to the container

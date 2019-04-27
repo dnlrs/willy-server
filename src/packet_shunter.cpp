@@ -3,11 +3,14 @@
 #include "localization.h"
 #include <cassert>
 
-packet_shunter::packet_shunter(int anchors_nr) :
-    anchors_number(anchors_nr),
-    db_storage("database.db", anchors_nr)
+packet_shunter::packet_shunter(
+    std::shared_ptr<cfg::configuration> context_in,
+    int anchors_nr) :
+        context(context_in),
+        anchors_number(anchors_nr)
 {   
     try {
+        db_storage = db::database("database.db", anchors_nr);
         db_storage.open(true);
     }
     catch (db::db_exception& dbe) {

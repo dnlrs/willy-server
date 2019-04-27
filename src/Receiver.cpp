@@ -1,18 +1,22 @@
 #include "receiver.h"
-#include "utils.h"
+#include "net_exception.h"
+#include "recv_exception.h"
 #include "sized_buffer.hpp"
 #include "socket_utils.h"
-#include "net_exception.h"
 #include "sock_exception.h"
-#include "recv_exception.h"
+#include "utils.h"
 #include <chrono>
 #include <thread>
 
 
-Receiver::Receiver(Dealer& dealer_ref, int anchors_number) :
-    broker(dealer_ref),
-    anchors_nr(anchors_number),
-    disconnected_anchors(anchors_number) 
+Receiver::Receiver(
+    Dealer& dealer_ref,
+    std::shared_ptr<cfg::configuration> context_in, 
+    int anchors_number) :
+        broker(dealer_ref),
+        context(context_in),
+        anchors_nr(anchors_number),
+        disconnected_anchors(anchors_number) 
 {
     raw_packets_queue = std::make_shared<sync_queue>();
     packet_collector  = std::make_shared<packet_shunter>(anchors_number);
