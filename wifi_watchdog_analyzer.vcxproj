@@ -52,7 +52,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="src\Conf.cpp" />
     <ClCompile Include="src\Dealer.cpp" />
     <ClCompile Include="src\packet_shunter.cpp" />
     <ClCompile Include="src\Receiver.cpp" />
@@ -63,8 +62,6 @@
     <ClCompile Include="src\worker.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\Conf.h" />
-    <ClInclude Include="src\Conf_exception.h" />
     <ClInclude Include="src\Dealer.h" />
     <ClInclude Include="src\localization.h" />
     <ClInclude Include="src\net_exception.h" />

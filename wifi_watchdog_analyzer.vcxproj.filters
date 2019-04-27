@@ -15,9 +15,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\Conf.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\Dealer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -44,9 +41,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\Conf.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\Dealer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -54,9 +48,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\Receiver.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Conf_exception.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\wARPtable.h">
