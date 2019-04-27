@@ -63,20 +63,20 @@ db::database::quit()
 
 
 void
-db::database::add_packet(PACKET_T packet, uint64_t anchor_mac)
+db::database::add_packet(packet new_packet, uint64_t anchor_mac)
 {
     std::string db_errmsg;
 
     if (db == nullptr)
         throw db_exception("no db connection"); 
 
-    std::string   hash = packet.hash;
-    std::string   ssid = packet.ssid.empty() ? "NULL" : packet.ssid;
-    int           rssi = packet.rssi;
-    uint64_t      mac  = (uint64_t)packet.mac_addr.compacted_mac;
-    int           channel    = packet.channel;
-    int           seq_number = packet.sequence_ctrl;
-    uint64_t      timestamp  = packet.timestamp;
+    std::string   hash = new_packet.hash;
+    std::string   ssid = new_packet.ssid.empty() ? "NULL" : new_packet.ssid;
+    int           rssi = new_packet.rssi;
+    uint64_t      mac  = new_packet.device_mac;
+    int           channel    = new_packet.channel;
+    int           seq_number = new_packet.sequence_ctrl;
+    uint64_t      timestamp  = new_packet.timestamp;
 
     std::string sql = "INSERT INTO packets(hash, ssid, rssi, mac, channel, seq_number, timestamp, anchor_mac) \
                        VALUES (?, ?, ?, ?, ?, ?, ?, ?);";
@@ -107,7 +107,7 @@ db::database::add_packet(PACKET_T packet, uint64_t anchor_mac)
         throw db_exception(db_errmsg.c_str());
     }
 
-    if (!packet.ssid.empty()) {
+    if (!new_packet.ssid.empty()) {
         if (sqlite3_bind_text(stmt, 2, ssid.c_str(), (int) ssid.length(), SQLITE_STATIC)) {
             db_errmsg = std::string(sqlite3_errmsg(db));
             sqlite3_finalize(stmt);
@@ -266,16 +266,16 @@ db::database::delete_packets_before(uint64_t timestamp) {
     sqlite3_finalize(stmt);
 }
 
-std::vector<PACKET_T>
+std::vector<packet>
 db::database::get_device_packets(uint64_t mac, uint64_t ts_start, uint64_t ts_end)
 {
     std::string db_errmsg;
 
     if (ts_start > ts_end) {
-        return std::vector<PACKET_T>();
+        return std::vector<packet>();
     }
 
-    std::vector<PACKET_T> result;
+    std::vector<packet> result;
 
     std::string sql = "SELECT hash, rssi, mac, seq_number, timestamp, anchor_mac  \
                        FROM packets                                               \
@@ -289,7 +289,7 @@ db::database::get_device_packets(uint64_t mac, uint64_t ts_start, uint64_t ts_en
     rs = sqlite3_prepare_v2(db, sql.c_str(), (int) sql.length(), &stmt, NULL);
     if (rs != SQLITE_OK || stmt == NULL) {
         db_errmsg = std::string(sqlite3_errmsg(db));
-        return std::vector<PACKET_T>();
+        return std::vector<packet>();
     }
 
 
@@ -300,7 +300,7 @@ db::database::get_device_packets(uint64_t mac, uint64_t ts_start, uint64_t ts_en
 
         db_errmsg = std::string(sqlite3_errmsg(db));
         sqlite3_finalize(stmt);
-        return std::vector<PACKET_T>();
+        return std::vector<packet>();
     }
 
     rs = sqlite3_step(stmt);
@@ -311,16 +311,16 @@ db::database::get_device_packets(uint64_t mac, uint64_t ts_start, uint64_t ts_en
         if (rs == SQLITE_ERROR || rs == SQLITE_MISUSE)
             break;
 
-        PACKET_T packet;
+        packet new_packet;
 
-        packet.hash = std::string((char*)sqlite3_column_text(stmt, 0));
-        packet.rssi = sqlite3_column_int(stmt, 1);
-        packet.mac_addr.compacted_mac   = sqlite3_column_int64(stmt, 2);
-        packet.sequence_ctrl            = sqlite3_column_int(stmt, 3);
-        packet.timestamp                = sqlite3_column_int64(stmt, 4);
-        packet.anchor_mac.compacted_mac = sqlite3_column_int64(stmt, 5);
+        new_packet.hash = std::string((char*)sqlite3_column_text(stmt, 0));
+        new_packet.rssi = sqlite3_column_int(stmt, 1);
+        new_packet.device_mac    = sqlite3_column_int64(stmt, 2);
+        new_packet.sequence_ctrl = sqlite3_column_int(stmt, 3);
+        new_packet.timestamp     = sqlite3_column_int64(stmt, 4);
+        new_packet.anchor_mac    = sqlite3_column_int64(stmt, 5);
 
-        result.push_back(packet);
+        result.push_back(new_packet);
         rs = sqlite3_step(stmt);
     }
 

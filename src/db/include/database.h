@@ -68,7 +68,7 @@ namespace db {
 
 
         /* Inserts a "raw" packet into the database. */
-        void add_packet(PACKET_T packet, uint64_t anchor_mac);
+        void add_packet(packet new_packet, uint64_t anchor_mac);
     
 
         /* Inserts a device and its associated position into the database. */
@@ -100,7 +100,7 @@ namespace db {
          * \return an empty vector if no packets found or an error occurred, if
          *         an error occurred db_errmsg is set
          */
-        std::vector<PACKET_T> 
+        std::vector<packet> 
             get_device_packets(uint64_t mac, uint64_t ts_start, uint64_t ts_end);
     
 
