@@ -25,17 +25,20 @@ public:
     receiver(
         dealer& dealer_ref, 
         std::shared_ptr<cfg::configuration> context_in,
-        int anchors_number);
-	~receiver();
+        std::shared_ptr<std::atomic_int>    dead_anchors_in);
+	
+    ~receiver();
 
+    /* Asks the workers to start and deploys the receiver thread */
     void start();
+
+    /* Asks workers to stop and stops the receiver thread */
     void stop();
+
+    /* Asks workers to finish and joins the receiver thread */
     void finish();
 
-    void notify_anchor_connected();
-
 private:
-
     /* Strategy:
      *   While all anchors are connected read data from the sockets
      * and push buffers into the chared queue for deserialization.
@@ -44,18 +47,28 @@ private:
      */
     void service();
 
+    /* Brings the receiver object to a clean, new state
+     *
+     * Calls in order:
+     * - stop
+     * - finish
+     * */
+    void clear_state();
+
+    /* Gets the hardware concurrency capability */
     int get_workers_number();
     
-
 private:
-    // reference to dealer
+    /* reference to dealer */
     dealer& broker;
-
-    int anchors_nr = 0;
+    
+    /* shared with the dealer, indicated the number of 
+     * anchors currently not connected 
+     * */
+    std::shared_ptr<std::atomic_int> dead_anchors = nullptr;
 
     /* thread controlling variables */
-    std::atomic_int  disconnected_anchors = 0;
-    std::atomic_bool stop_working         = false;
+    std::atomic_bool stop_working = false;
 
     /* reference to the actual receiver thread */
     std::thread receiver_thread;

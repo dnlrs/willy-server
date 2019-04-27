@@ -12,23 +12,29 @@
 
 receiver::receiver(
     dealer& dealer_ref,
-    std::shared_ptr<cfg::configuration> context_in, 
-    int anchors_number) :
+    std::shared_ptr<cfg::configuration> context_in,
+    std::shared_ptr<std::atomic_int>    dead_anchors_in) :
         broker(dealer_ref),
         context(context_in),
-        anchors_nr(anchors_number),
-        disconnected_anchors(anchors_number) {}
+        dead_anchors(dead_anchors_in)
+{   
+    stop_working = false;
+    raw_packets_queue = nullptr;
+    packet_collector  = nullptr;
+}
 
 receiver::~receiver()
 {
-    stop();
-    finish();
+    clear_state();
 }
 
 void receiver::start()
 {
+    /* this assures a clean start state */
+    clear_state();
+
     raw_packets_queue = std::make_shared<sync_queue>();
-    packet_collector  = std::make_shared<collector>(context, anchors_nr);
+    packet_collector  = std::make_shared<collector>(context);
 
     int workers_nr = get_workers_number();
 
@@ -39,7 +45,7 @@ void receiver::start()
         workers.push_back(new_worker);
     }
     
-    stop_working = false;
+    stop_working    = false;
     receiver_thread = std::thread(&service, this);
 }
 
@@ -60,19 +66,15 @@ void receiver::finish()
     if (receiver_thread.joinable())
         receiver_thread.join();
 
-    raw_packets_queue.reset();
     raw_packets_queue = nullptr;
-
-    packet_collector.reset();
-    packet_collector = nullptr;
+    packet_collector  = nullptr;
 }
 
-void
-receiver::notify_anchor_connected()
+void receiver::clear_state()
 {
-    disconnected_anchors--;
+    stop();
+    finish();
 }
-
 
 void
 receiver::service()
@@ -130,13 +132,12 @@ receiver::service()
                     buffer.msg_size   = read_sized_message(buffer.msg, sock);
                     buffer.anchor_mac = broker.get_anchor_mac(sock);
 
-                    // save buffer only if all anchors are connected
-                    if (disconnected_anchors == 0)
+                    if (dead_anchors->load() == 0) {
                         raw_packets_queue->push(buffer);
+                    }
                 }
             }
         } catch (sock_exception& sock_ex) {
-            disconnected_anchors++;
             broker.notify_anchor_disconnected(sock_ex.get_socket());
         } catch (net_exception& net_ex) {
             broker.notify_fatal_error();
