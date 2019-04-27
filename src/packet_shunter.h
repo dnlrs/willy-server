@@ -2,6 +2,7 @@
 #define PACKET_SHUNTER_H_INCLUDED
 #pragma once
 
+#include "db.h"
 #include "cfg.h"
 #include "packet.h"
 #include "device.h"
@@ -11,13 +12,27 @@
 #include <mutex>
 
 constexpr long int default_max_container_size = 1000;
+constexpr uint64_t default_max_timestamp_diff = 10; // seconds
 
 class packet_shunter {
 
 public:
+    /* note: also opens a satabase connection */
     packet_shunter(int anchors_nr);
     ~packet_shunter();
 
+    /* Adds a new packet to the container
+     *
+     * If the packet has been received by all anchors then performs
+     * localization and inserts the packet and the localized device
+     * into the persistent storage (db).
+     * 
+     * If the container reached the max allowed size then it is 
+     * cleaned. during the cleaning process other threads cannot 
+     * access the containter.
+     * 
+     * This function will be executed by different worker threads.
+     **/
     void submit_packet(packet new_packet);
 
 private:
@@ -35,14 +50,15 @@ private:
 
     int anchors_number = 0;
 
-    /* [packet hash -> packet] */
-//    std::map<std::string, packet> packets;
     /* [packet hash -> [anchor mac -> rssi measurement] */
     std::map<std::string, std::map<uint64_t, int32_t>> rssi_readings;
+    /* [packet hash -> timestamp] */
+    std::map<std::string, uint64_t> timestamps;
 
     std::mutex packets_lock;
 
-    std::shared_ptr<cfg::configuration> context;
+    std::shared_ptr<cfg::configuration> context = nullptr;
+    db::database db_storage;
 };
 
 #endif // !PACKET_SHUNTER_H_INCLUDED
