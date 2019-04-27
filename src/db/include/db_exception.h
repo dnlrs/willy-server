@@ -1,12 +1,14 @@
+#ifndef DB_EXCEPTION_H_INCLUDED
+#define DB_EXCEPTION_H_INCLUDED
 #pragma once
 
+#include "logger.h"
 #include <string>
 
 namespace db {
-    
-    
 
-    class db_exception : public std::exception
+    class db_exception : 
+        public std::exception
     {
     public:
 
@@ -17,11 +19,16 @@ namespace db {
     
         db_exception() : 
             errmsg("DB_ERROR: unknown"), 
-            errtype(error) {}
+            errtype(error) 
+        {
+            debuglog(errmsg);
+        }
 
-        db_exception(const char* msg, type etype = error) {
-            this->errmsg = "DB_ERROR: " + std::string(msg);
-            errtype      = etype;
+        db_exception(const char* msg, type etype = error) :
+            errmsg("DB_ERROR: " + std::string(msg)), 
+            errtype(etype) 
+        {
+            debuglog(errmsg);
         }
 
         virtual const char* what() const throw()
@@ -40,4 +47,4 @@ namespace db {
     };
 }
 
-
+#endif // !DB_EXCEPTION_H_INCLUDED
