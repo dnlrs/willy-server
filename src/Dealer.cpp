@@ -8,20 +8,28 @@
 
 dealer::dealer()
 {
-
+    listening_socket = INVALID_SOCKET;
+    stop_working = false;
+    dead_anchors = nullptr;
+    preceiver    = nullptr;
+    context      = nullptr;
 }
 
 dealer::~dealer()
 {
-
+    clear_state();
+    close_connection(&listening_socket);
 }
 
 
 void dealer::init(std::string conf_file)
 {
+    // new configuration
+    context = std::make_shared<cfg::configuration>();
+
     // read configuration
-    context.import_configuration(conf_file, true);
-    if (context.get_anchors_number() == 0)
+    context->import_configuration(conf_file, true);
+    if (context->get_anchors_number() == 0)
         throw net_exception("No anchors found in configuration file");
 
     // setup listening socket
@@ -31,23 +39,94 @@ void dealer::init(std::string conf_file)
 
 void dealer::start()
 {
-    // start receiver thread -- receiver::service
-        // starts doing select on available sockets
-        // if dealer says to ignore packets, ignores packets
-    // start worker threads -- worker::service
-        // waits on queue for packets to deserialize
-        // deserializes packets, localizes devices, inserts packets into database
-    // start dealer thread -- service
+    /* this assures a clean start */
+    clear_state();
 
-    // "go" to receiver thread
-    // connect all anchors
-    // connect_all_anchors();
+    dead_anchors = 
+        std::make_shared<std::atomic_int>(context->get_anchors_number());
+    
+    preceiver = std::make_unique<receiver>(*this, context, dead_anchors);
+    preceiver->start();
+
+    stop_working  = false;
+    dealer_thread = std::thread(&service, this);
 }
 
 
 void dealer::stop()
-{
+{   
+    if (preceiver != nullptr)
+        preceiver->stop();
 
+    stop_working = true;
+}
+
+void dealer::finish()
+{
+    if (preceiver != nullptr)
+        preceiver->finish();
+    
+    if (dealer_thread.joinable())
+        dealer_thread.join();
+
+    preceiver    = nullptr;
+    dead_anchors = nullptr;
+}
+
+void dealer::clear_state()
+{
+    stop();
+    finish();
+    close_all_connections();
+}
+
+void
+dealer::service()
+{
+    debuglog("Waiting for ", dead_anchors->load(), " anchors to connect...");
+
+    std::unique_lock<std::mutex> guard(anchors_rmtx);
+    while (stop_working == false) {
+
+        /* This condition variable will return true if the lambda expression
+         * is true;
+         * will return false in all other cases:
+         * - timeout expired
+         * - spurious notification 
+         * */
+        if (dealer_cv.wait_for(
+                guard, 
+                std::chrono::milliseconds(default_waiting_time_ms),
+                [this] () -> bool {
+                    return dead_anchors->load() > 0 ? true : false;
+                })) {
+
+            SOCKET new_socket = INVALID_SOCKET;
+            anchor new_anchor = connect_anchor(&new_socket);
+
+            std::pair<double, double> new_anchor_position(0, 0);
+            bool rs = context->get_anchor_position(
+                        new_anchor.get_mac(), 
+                        new_anchor_position);
+            
+            /* If anchor was found in the system configuration then add
+             * the new anchor to the system and notify the receiver thread;
+             * otherwise log unrecognized anchor and close connection
+             * */
+            if (rs == true) {
+                new_anchor.set_position(new_anchor_position);
+                add_connected_anchor(new_socket, new_anchor);
+
+                dead_anchors->fetch_sub(1);
+                debuglog("New anchor connected: ", mac_int2str(new_anchor.get_mac()));
+            }
+            else {
+                debuglog("Anchor " + mac_int2str(new_anchor.get_mac()) +
+                    " was not found in configuration file");
+                close_connection(&new_socket);
+            }
+        }
+    }
 }
 
 void dealer::setup_listening_socket()
@@ -61,7 +140,7 @@ void dealer::setup_listening_socket()
         throw net_exception(
             "listening_socket creation fail\n" + wsa_etos(WSAGetLastError()));
 
-    // set non blocking socket - TODO: make it unblocking and add max attempts in connect_anchor()
+    // TODO: make it unblocking and add max attempts in connect_anchor()
     //set_non_blocking_socket(listening_socket);
 	
 	// local endpoint parameters for listening socket (addr. family, IP, port)
@@ -92,36 +171,6 @@ void dealer::setup_listening_socket()
 	}
 }
 
-void dealer::connect_all_anchors()
-{
-    int anchors_number = context.get_anchors_number();
-    bool rs = false;
-
-    debuglog("Waiting for ", anchors_number, " to connect...");
-    while (anchors_number > 0) {
-        
-        SOCKET new_socket = INVALID_SOCKET;
-        anchor new_anchor = connect_anchor(&new_socket);
-
-        std::pair<double, double> new_anchor_position(0, 0);
-        rs = context.get_anchor_position(
-                            new_anchor.get_mac(), new_anchor_position);
-        if (rs == true) {
-            // anchor was found in configuration file
-            new_anchor.set_position(new_anchor_position);
-            add_connected_anchor(new_socket, new_anchor);
-
-            anchors_number--;
-            debuglog("New anchor connected: ", mac_int2str(new_anchor.get_mac()));
-        }
-        else {
-            throw net_exception("Anchor " + mac_int2str(new_anchor.get_mac()) + 
-                                " was not found in configuration file");
-        }
-
-    }
-}
-
 void 
 dealer::add_connected_anchor(
     const SOCKET new_socket, 
@@ -133,8 +182,6 @@ dealer::add_connected_anchor(
     
     uint64_t anchor_mac = new_anchor.get_mac();
     
-    std::lock_guard<std::recursive_mutex> guard(anchors_rmtx);
-    
     if (anchors.find(anchor_mac) != anchors.end()) {
         debuglog("Newly connected anchor was connected previously");
         remove_connected_anchor(anchor_mac);
@@ -143,17 +190,12 @@ dealer::add_connected_anchor(
     anchors[anchor_mac]       = new_anchor;
     mac_to_socket[anchor_mac] = new_socket;
     socket_to_mac[new_socket] = anchor_mac;
-
-    // notify receiver that a new anchor connected
-    collector.notify_anchor_connected();
 }
 
 void
 dealer::remove_connected_anchor(
     const uint64_t anchor_mac)
 {
-    std::lock_guard<std::recursive_mutex> guard(anchors_rmtx);
-    
     SOCKET old_socket = mac_to_socket[anchor_mac];
     
     if (anchors.find(anchor_mac) != anchors.end())
@@ -165,15 +207,7 @@ dealer::remove_connected_anchor(
     if (socket_to_mac.find(old_socket) != socket_to_mac.end())
         socket_to_mac.erase(old_socket);
 
-    if (old_socket != INVALID_SOCKET) {
-        if (shutdown(old_socket, SD_SEND) == SOCKET_ERROR)
-            debuglog(
-                "shutdown socket error or UDP socket (no harm)\n",
-                wsa_etos(WSAGetLastError()));
-
-        if (closesocket(old_socket) == SOCKET_ERROR)
-            debuglog("closesocket error: ", wsa_etos(WSAGetLastError()));
-    }
+    close_connection(&old_socket);
 }
 
 anchor 
@@ -201,13 +235,9 @@ dealer::connect_anchor(SOCKET* rsocket)
     wARPtable arp_table;
     uint64_t new_mac = arp_table.get_mac_from_ip(anchor_sa.sin_addr.s_addr);
 
-    // set socket option SO_KEEPALIVE
     set_keepalive_option(new_socket);
-
-    // set non-blocking socket
     set_non_blocking_socket(new_socket);
 
-    // send connection ack
     send_connection_ack(new_socket);
 
     // return new socket and new anchor
@@ -215,6 +245,19 @@ dealer::connect_anchor(SOCKET* rsocket)
     return anchor(new_mac, anchor_sa.sin_addr.s_addr);
 }
 
+
+void dealer::close_all_connections()
+{
+    std::unique_lock<std::mutex> guard(anchors_rmtx);
+
+    for (auto open_connection : socket_to_mac) {
+        SOCKET   open_socket = open_connection.first;
+        uint64_t anchor_mac  = open_connection.second;
+
+        close_connection(&open_socket);
+        remove_connected_anchor(anchor_mac);
+    }
+}
 
 
 
@@ -244,7 +287,7 @@ dealer::send_connection_ack(const SOCKET anchor_socket)
 uint64_t
 dealer::get_anchor_mac(SOCKET in_socket)
 {
-    std::lock_guard<std::recursive_mutex> guard(anchors_rmtx);
+    std::lock_guard<std::mutex> guard(anchors_rmtx);
     // TODO: what if wrong socket in?
     return socket_to_mac[in_socket];
 }
@@ -254,7 +297,7 @@ dealer::get_opened_sockets()
 {
     std::vector<SOCKET> rval;
 
-    std::lock_guard<std::recursive_mutex> guard(anchors_rmtx);
+    std::lock_guard<std::mutex> guard(anchors_rmtx);
 
     for (auto soc_pair : socket_to_mac)
         rval.push_back(soc_pair.first);
@@ -265,24 +308,12 @@ dealer::get_opened_sockets()
 void
 dealer::notify_anchor_disconnected(SOCKET dead_socket)
 {
-    // TODO: wake-up thread
+    dead_anchors->fetch_add(1);
+    dealer_cv.notify_all();
 }
 
 void
 dealer::notify_fatal_error()
 {
-    // TODO: close everything
+    stop();
 }
-
-//std::map<uint64_t, Point2d> 
-//dealer::get_anchor_positions()
-//{
-//    std::map<uint64_t, Point2d> rval;
-//
-//    std::lock_guard<std::mutex> guard(recvs_mtx);
-//
-//    for (receiver const &r: recvs)
-//        rval[r.m_mac().compacted_mac] = r.m_loc();
-//    
-//    return rval;
-//}
