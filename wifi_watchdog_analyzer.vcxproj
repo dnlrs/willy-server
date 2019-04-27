@@ -59,6 +59,7 @@
     <ClCompile Include="src\socket_utils.cpp" />
     <ClCompile Include="src\wARPtable.cpp" />
     <ClCompile Include="src\wifi_watchdog_analyzer.cpp" />
+    <ClCompile Include="src\worker.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Conf.h" />
@@ -72,6 +73,7 @@
     <ClInclude Include="src\socket_utils.h" />
     <ClInclude Include="src\sock_exception.h" />
     <ClInclude Include="src\wARPtable.h" />
+    <ClInclude Include="src\worker.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="src\conf\conf.vcxproj">
