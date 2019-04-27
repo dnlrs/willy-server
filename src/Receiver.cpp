@@ -40,27 +40,29 @@ void receiver::start()
 
     debuglog("deploying " + std::to_string(workers_nr) + " workers\n");
     for (int i = 0; i < workers_nr; i++) {
-        worker new_worker(context, raw_packets_queue, packet_collector);
-        new_worker.start();
+        std::shared_ptr<worker> new_worker = 
+            std::make_shared<worker>(
+                context, raw_packets_queue, packet_collector);
+        new_worker->start();
         workers.push_back(new_worker);
     }
     
     stop_working    = false;
-    receiver_thread = std::thread(&service, this);
+    receiver_thread = std::thread(&receiver::service, this);
 }
 
 void receiver::stop()
 {
     stop_working = true;
 
-    for (worker& employee : workers)
-        employee.stop();
+    for (std::shared_ptr<worker> employee : workers)
+        employee->stop();
 }
 
 void receiver::finish()
 {   
-    for (worker& employee : workers)
-        employee.finish();
+    for (std::shared_ptr<worker> employee : workers)
+        employee->finish();
     workers.clear();
 
     if (receiver_thread.joinable())

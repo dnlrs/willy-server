@@ -9,6 +9,8 @@
 #include <vector>
 #include <map>
 
+#pragma comment(lib, "sqlite3.lib")  // sqlite3 library
+
 namespace db {
     
     /*

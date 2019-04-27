@@ -85,7 +85,7 @@ private:
     std::shared_ptr<collector> packet_collector = nullptr;
 
     /* threads that deserialize raw buffers into packets */
-    std::vector<worker> workers;
+    std::vector<std::shared_ptr<worker>> workers;
 
     /* system wide configuration */
     std::shared_ptr<cfg::configuration> context = nullptr;

@@ -8,6 +8,7 @@
 #include "net_exception.h"
 #include "receiver.h"
 #include "wwsadata.h"
+#include <atomic>
 #include <condition_variable>
 #include <list>
 #include <map>
@@ -15,10 +16,13 @@
 #include <mutex>
 #include <winsock2.h>
 
+#pragma comment(lib, "Ws2_32.lib")   //winSock library
+#pragma comment(lib, "iphlpapi.lib") //windows IP Helper API
+
 /* port used for the connection with the receivers */
 #define SERVICE_PORT 27015 
 
-constexpr long int default_waiting_time_ms = 20;
+constexpr long int dealer_waiting_time_ms = 20;
 
 /*
  * The dealer is the one who is in charge to handle the connection with the 

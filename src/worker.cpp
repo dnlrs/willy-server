@@ -23,7 +23,7 @@ worker::start()
     finish();
 
     stop_working  = false;
-    worker_thread = std::thread(&service, this);
+    worker_thread = std::thread(&worker::service, this);
 }
 
 void

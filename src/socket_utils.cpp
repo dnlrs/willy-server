@@ -104,7 +104,7 @@ read_sized_message(
     read_bytes = read_n(&(buf[0]), msg_length, raw_socket);
     assert(read_bytes == 4);
 
-    uint32_t msg_length = ntohl((uint32_t)buf[0]);
+    msg_length = ntohl((uint32_t)buf[0]);
     if (msg_length > default_buffer_size)
         throw net_exception(
             "read_sized_message: msg length is greater than buffer size");

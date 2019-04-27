@@ -43,13 +43,13 @@ void dealer::start()
     clear_state();
 
     dead_anchors = 
-        std::make_shared<std::atomic_int>(context->get_anchors_number());
+        std::make_shared<std::atomic_int>((int)context->get_anchors_number());
     
     preceiver = std::make_unique<receiver>(*this, context, dead_anchors);
     preceiver->start();
 
     stop_working  = false;
-    dealer_thread = std::thread(&service, this);
+    dealer_thread = std::thread(&dealer::service, this);
 }
 
 
@@ -96,7 +96,7 @@ dealer::service()
          * */
         if (dealer_cv.wait_for(
                 guard, 
-                std::chrono::milliseconds(default_waiting_time_ms),
+                std::chrono::milliseconds(dealer_waiting_time_ms),
                 [this] () -> bool {
                     return dead_anchors->load() > 0 ? true : false;
                 })) {
@@ -153,7 +153,7 @@ void dealer::setup_listening_socket()
 
     // Bind socket
     int err = SOCKET_ERROR;
-    err = ::bind(listening_socket, (const sockaddr*) &service, sizeof(service));
+    err = ::bind(listening_socket, (const sockaddr*) &service, (int) sizeof(service));
 	if (err == SOCKET_ERROR) {
         closesocket(listening_socket);
 		listening_socket = INVALID_SOCKET;
@@ -221,11 +221,11 @@ dealer::connect_anchor(SOCKET* rsocket)
 
     // accept new connection
     struct sockaddr_in anchor_sa;
-    int anchor_sa_size = sizeof(anchor_sa);
+    size_t anchor_sa_size = sizeof(anchor_sa);
     memset(&anchor_sa, 0, anchor_sa_size);
 
     SOCKET new_socket = 
-        ::accept(listening_socket, (sockaddr*) &anchor_sa, &anchor_sa_size);
+        ::accept(listening_socket, (sockaddr*) &anchor_sa, (int*) &anchor_sa_size);
 
     if (new_socket == INVALID_SOCKET)
         throw net_exception("Accept failed while connecting an anchor\n" + 

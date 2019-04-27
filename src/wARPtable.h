@@ -2,7 +2,7 @@
 #define WARPTABLE_H_INCLUDED
 #pragma once
 
-#include <WinSock2.h>
+#include <winsock2.h>
 #include <ws2def.h>
 #include <netioapi.h>
 

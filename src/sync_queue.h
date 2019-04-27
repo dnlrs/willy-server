@@ -11,7 +11,7 @@
 
 
 /* Maximum waiting time for a thread on this queue */
-constexpr long int default_waiting_time_ms = 20;
+constexpr long int sync_queue_waiting_time_ms = 20;
 
 
 /* FIFO blocking queue with concurrency management
@@ -53,7 +53,7 @@ public:
             consumers_nr++;
 
             if (consumer.wait_for(
-                    guard, std::chrono::milliseconds(default_waiting_time_ms),
+                    guard, std::chrono::milliseconds(sync_queue_waiting_time_ms),
                     [this] () -> bool { 
                         return fifo_queue.size() > 0 ? true : false; 
                     })) {
@@ -63,7 +63,7 @@ public:
             }
             else {
                 rval.msg_size = 0;
-                rval.msg.empty();
+                rval.msg.clear();
             }
 
             consumers_nr--;
