@@ -18,6 +18,7 @@ worker::~worker()
 void
 worker::start()
 {
+    stop_working  = false;
     worker_thread = std::thread(&service, this);
 }
 
@@ -34,7 +35,6 @@ worker::finish()
         worker_thread.join();
 }
 
-
 void
 worker::service()
 {
@@ -47,7 +47,7 @@ worker::service()
         packet new_packet     = deserialize(buffer);
         new_packet.anchor_mac = buffer.anchor_mac;
 
-        // TODO: add packet to the container
+        collector->submit_packet(new_packet);
     }
 }
 
