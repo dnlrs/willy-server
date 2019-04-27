@@ -4,6 +4,7 @@
 
 #include "Dealer.h"
 #include "sync_queue.h"
+#include "packet_shunter.h"
 #include <thread>
 #include <atomic>
 
@@ -15,7 +16,7 @@ class Receiver
 {
 
 public:
-    Receiver(Dealer& dealer_ref, int disconnected_anchors);
+    Receiver(Dealer& dealer_ref, int anchors_number);
 	~Receiver();
 
     void start();
@@ -38,6 +39,8 @@ private:
     // reference to dealer
     Dealer& broker;
 
+    int anchors_nr = 0;
+
     // thread controlling variables
     std::atomic_int  disconnected_anchors = 0;
     std::atomic_bool stop_working         = false;
@@ -48,6 +51,10 @@ private:
     /* shared fifo queue between the receiver and the workers;
      * concurrency is managed within the queue object */
     std::shared_ptr<sync_queue> raw_packets_queue = nullptr;
+
+    /* shared conainter between worker threads, the receiver
+     * creates it but doesn't use it */
+    std::shared_ptr<packet_shunter> packet_collector = nullptr;
 };
 
 #endif

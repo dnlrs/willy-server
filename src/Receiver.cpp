@@ -9,11 +9,13 @@
 #include <thread>
 
 
-Receiver::Receiver(Dealer& dealer_ref, int anchors_nr) :
+Receiver::Receiver(Dealer& dealer_ref, int anchors_number) :
     broker(dealer_ref),
-    disconnected_anchors(anchors_nr) 
+    anchors_nr(anchors_number),
+    disconnected_anchors(anchors_number) 
 {
     raw_packets_queue = std::make_shared<sync_queue>();
+    packet_collector  = std::make_shared<packet_shunter>(anchors_number);
 }
 
 Receiver::~Receiver()
