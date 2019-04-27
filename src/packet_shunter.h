@@ -34,19 +34,29 @@ public:
      * access the containter.
      * 
      * This function will be executed by different worker threads.
-     **/
+     * */
     void submit_packet(packet new_packet);
 
 private:
+    /* Sets up and calls the localization routine
+     *  
+     * Retrieves anchors position from system configuration and
+     * calls the localization routine.
+     * */
     device process_readings(
         packet new_packet, 
         std::map<uint64_t, int32_t> readings);
 
+    /* Stores packet and device data into persistent storage */
     void store_data(
         packet new_packet, 
         device new_device);
 
-
+    /* Cleans the container from old packets and readings
+     * 
+     * Retrieves current time and deletes from container all references
+     * to packets older than $(default_max_timestamp_diff) seconds.
+     * */
     void clean_container();
 
 
@@ -59,7 +69,10 @@ private:
 
     std::mutex packets_lock;
 
+    /* system wide configuration */
     std::shared_ptr<cfg::configuration> context = nullptr;
+
+    /* database connection */
     db::database db_storage;
 };
 
