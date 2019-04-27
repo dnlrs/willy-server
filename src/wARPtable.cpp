@@ -1,6 +1,6 @@
-#include "wARPtable.h"
-#include "utils.h"
 #include "net_exception.h"
+#include "utils.h"
+#include "wARPtable.h"
 
 wARPtable::wARPtable(ADDRESS_FAMILY address_family) :
     address_family(AF_INET),

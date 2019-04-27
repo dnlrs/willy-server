@@ -52,9 +52,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="src\Dealer.cpp" />
+    <ClCompile Include="src\dealer.cpp" />
     <ClCompile Include="src\collector.cpp" />
-    <ClCompile Include="src\Receiver.cpp" />
+    <ClCompile Include="src\receiver.cpp" />
     <ClCompile Include="src\socket_utils.cpp" />
     <ClCompile Include="src\sync_queue.cpp" />
     <ClCompile Include="src\wARPtable.cpp" />
@@ -62,11 +62,11 @@
     <ClCompile Include="src\worker.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\Dealer.h" />
+    <ClInclude Include="src\dealer.h" />
     <ClInclude Include="src\localization.h" />
     <ClInclude Include="src\net_exception.h" />
     <ClInclude Include="src\collector.h" />
-    <ClInclude Include="src\Receiver.h" />
+    <ClInclude Include="src\receiver.h" />
     <ClInclude Include="src\recv_exception.h" />
     <ClInclude Include="src\coll_exception.h" />
     <ClInclude Include="src\sized_buffer.hpp" />

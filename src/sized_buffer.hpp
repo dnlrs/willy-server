@@ -1,8 +1,8 @@
 #ifndef SIZED_BUFFER_HPP_INCLUDED
 #define SIZED_BUFFER_HPP_INCLUDED
 
-#include <vector>
 #include <cstdint>
+#include <vector>
 
 class sized_buffer {
 

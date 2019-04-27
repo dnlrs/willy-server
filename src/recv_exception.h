@@ -2,8 +2,8 @@
 #define RECV_EXCEPTION_H_INCLUDED
 #pragma once
 
-#include "net_exception.h"
 #include "logger.h"
+#include "net_exception.h"
 #include <string>
 
 // this exception it is raised when the connection is closed by the peer

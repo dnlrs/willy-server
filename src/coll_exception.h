@@ -3,6 +3,7 @@
 #pragma once
 
 #include "logger.h"
+#include <exception>
 
 class coll_exception :
     public std::exception

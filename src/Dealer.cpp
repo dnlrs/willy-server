@@ -6,18 +6,18 @@
 #include <mstcpip.h>
 
 
-Dealer::Dealer()
+dealer::dealer()
 {
 
 }
 
-Dealer::~Dealer()
+dealer::~dealer()
 {
 
 }
 
 
-void Dealer::init(std::string conf_file)
+void dealer::init(std::string conf_file)
 {
     // read configuration
     context.import_configuration(conf_file, true);
@@ -29,7 +29,7 @@ void Dealer::init(std::string conf_file)
 }
 
 
-void Dealer::start()
+void dealer::start()
 {
     // start receiver thread -- receiver::service
         // starts doing select on available sockets
@@ -45,12 +45,12 @@ void Dealer::start()
 }
 
 
-void Dealer::stop()
+void dealer::stop()
 {
 
 }
 
-void Dealer::setup_listening_socket()
+void dealer::setup_listening_socket()
 {
     if (listening_socket != INVALID_SOCKET)
         throw net_exception("listening socket should be invalid");
@@ -92,7 +92,7 @@ void Dealer::setup_listening_socket()
 	}
 }
 
-void Dealer::connect_all_anchors()
+void dealer::connect_all_anchors()
 {
     int anchors_number = context.get_anchors_number();
     bool rs = false;
@@ -123,7 +123,7 @@ void Dealer::connect_all_anchors()
 }
 
 void 
-Dealer::add_connected_anchor(
+dealer::add_connected_anchor(
     const SOCKET new_socket, 
     const anchor new_anchor)
 {
@@ -149,7 +149,7 @@ Dealer::add_connected_anchor(
 }
 
 void
-Dealer::remove_connected_anchor(
+dealer::remove_connected_anchor(
     const uint64_t anchor_mac)
 {
     std::lock_guard<std::recursive_mutex> guard(anchors_rmtx);
@@ -177,7 +177,7 @@ Dealer::remove_connected_anchor(
 }
 
 anchor 
-Dealer::connect_anchor(SOCKET* rsocket)
+dealer::connect_anchor(SOCKET* rsocket)
 {
     if (listening_socket == INVALID_SOCKET)
         throw net_exception(
@@ -219,7 +219,7 @@ Dealer::connect_anchor(SOCKET* rsocket)
 
 
 void 
-Dealer::send_connection_ack(const SOCKET anchor_socket)
+dealer::send_connection_ack(const SOCKET anchor_socket)
 {
     if (anchor_socket == INVALID_SOCKET)
         throw net_exception("Cannot send connection ack on invalid socket");
@@ -242,7 +242,7 @@ Dealer::send_connection_ack(const SOCKET anchor_socket)
 }
 
 uint64_t
-Dealer::get_anchor_mac(SOCKET in_socket)
+dealer::get_anchor_mac(SOCKET in_socket)
 {
     std::lock_guard<std::recursive_mutex> guard(anchors_rmtx);
     // TODO: what if wrong socket in?
@@ -250,7 +250,7 @@ Dealer::get_anchor_mac(SOCKET in_socket)
 }
 
 std::vector<SOCKET> 
-Dealer::get_opened_sockets()
+dealer::get_opened_sockets()
 {
     std::vector<SOCKET> rval;
 
@@ -263,25 +263,25 @@ Dealer::get_opened_sockets()
 }
 
 void
-Dealer::notify_anchor_disconnected(SOCKET dead_socket)
+dealer::notify_anchor_disconnected(SOCKET dead_socket)
 {
     // TODO: wake-up thread
 }
 
 void
-Dealer::notify_fatal_error()
+dealer::notify_fatal_error()
 {
     // TODO: close everything
 }
 
 //std::map<uint64_t, Point2d> 
-//Dealer::get_anchor_positions()
+//dealer::get_anchor_positions()
 //{
 //    std::map<uint64_t, Point2d> rval;
 //
 //    std::lock_guard<std::mutex> guard(recvs_mtx);
 //
-//    for (Receiver const &r: recvs)
+//    for (receiver const &r: recvs)
 //        rval[r.m_mac().compacted_mac] = r.m_loc();
 //    
 //    return rval;

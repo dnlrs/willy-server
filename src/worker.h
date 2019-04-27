@@ -3,8 +3,8 @@
 #pragma once
 
 #include "cfg.h"
+#include "collector.h"
 #include "packet.h"
-#include "packet_shunter.h"
 #include "sized_buffer.hpp"
 #include "sync_queue.h"
 #include <atomic>

@@ -1,6 +1,6 @@
 #include "socket_utils.h"
-#include "net_exception.h"
 #include "sock_exception.h"
+#include "net_exception.h"
 #include "utils.h"
 #include <cassert>
 #include <mstcpip.h>

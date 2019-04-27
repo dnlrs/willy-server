@@ -2,8 +2,9 @@
 #define NET_EXCEPTION_H_INCLUDED
 #pragma once
 
-#include <string>
 #include "logger.h"
+#include <exception>
+#include <string>
 
 using namespace std;
 

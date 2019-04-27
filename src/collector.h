@@ -2,12 +2,12 @@
 #define COLLECTOR_H_INCLUDED
 #pragma once
 
-#include "db.h"
 #include "cfg.h"
-#include "packet.h"
+#include "db.h"
 #include "device.h"
-#include <string>
+#include "packet.h"
 #include <cstdint>
+#include <string>
 #include <map>
 #include <mutex>
 

@@ -2,17 +2,17 @@
 #define DEALER_H_INCLUDED
 #pragma once
 
-#include "wwsadata.h"
-#include "packet.h"
 #include "anchor.h"
 #include "cfg.h"
+#include "packet.h"
+#include "net_exception.h"
+#include "receiver.h"
+#include "wwsadata.h"
+#include <list>
 #include <map>
 #include <memory>
 #include <mutex>
-#include <list>
 #include <winsock2.h>
-#include "net_exception.h"
-#include "receiver.h"
 
 #define SERVICE_PORT 27015 /* port used for the connection with the receivers */
 
@@ -20,12 +20,12 @@
  * The dealer is the one who is in charge to handle the connection with the boards when the game starts
  * and whenever issues coming. Is the one who holds the listening Sockets and all the synchronization tools
  */
-class Dealer
+class dealer
 {
 public:
 
-    Dealer();
-    ~Dealer();
+    dealer();
+    ~dealer();
 
     /* reads configuration file */
     void init(std::string conf_file);
@@ -101,7 +101,7 @@ private:
     std::map<SOCKET, uint64_t>  socket_to_mac;  // {socket, mac}
     std::recursive_mutex        anchors_rmtx;
 
-    Receiver collector;
+    receiver collector;
 
 };
 

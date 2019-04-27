@@ -4,10 +4,10 @@
 
 
 #include "sized_buffer.hpp"
-#include <mutex>
-#include <queue>
 #include <atomic>
 #include <condition_variable>
+#include <mutex>
+#include <queue>
 
 
 /* Maximum waiting time for a thread on this queue */

@@ -1,5 +1,5 @@
 #include "collector.h"
-#include "shunter_exception.h"
+#include "coll_exception.h"
 #include "localization.h"
 #include <cassert>
 

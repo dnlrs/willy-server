@@ -1,5 +1,5 @@
-#include "worker.h"
 #include "logger.h"
+#include "worker.h"
 
 worker::worker(
     std::shared_ptr<cfg::configuration> context_in,

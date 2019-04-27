@@ -2,8 +2,8 @@
 #define SOCK_EXCEPTION_H_INCLUDED
 #pragma once
 
-#include "net_exception.h"
 #include "logger.h"
+#include "net_exception.h"
 #include "utils.h"
 #include <string>
 #include <WinSock2.h>

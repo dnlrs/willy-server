@@ -1,6 +1,6 @@
-#include "receiver.h"
-#include "Dealer.h"
+#include "dealer.h"
 #include "net_exception.h"
+#include "receiver.h"
 #include "recv_exception.h"
 #include "sized_buffer.hpp"
 #include "socket_utils.h"
@@ -10,8 +10,8 @@
 #include <thread>
 
 
-Receiver::Receiver(
-    Dealer& dealer_ref,
+receiver::receiver(
+    dealer& dealer_ref,
     std::shared_ptr<cfg::configuration> context_in, 
     int anchors_number) :
         broker(dealer_ref),
@@ -19,13 +19,13 @@ Receiver::Receiver(
         anchors_nr(anchors_number),
         disconnected_anchors(anchors_number) {}
 
-Receiver::~Receiver()
+receiver::~receiver()
 {
     stop();
     finish();
 }
 
-void Receiver::start()
+void receiver::start()
 {
     raw_packets_queue = std::make_shared<sync_queue>();
     packet_collector  = std::make_shared<collector>(context, anchors_nr);
@@ -43,7 +43,7 @@ void Receiver::start()
     receiver_thread = std::thread(&service, this);
 }
 
-void Receiver::stop()
+void receiver::stop()
 {
     stop_working = true;
 
@@ -51,7 +51,7 @@ void Receiver::stop()
         employee.stop();
 }
 
-void Receiver::finish()
+void receiver::finish()
 {   
     for (worker& employee : workers)
         employee.finish();
@@ -68,14 +68,14 @@ void Receiver::finish()
 }
 
 void
-Receiver::notify_anchor_connected()
+receiver::notify_anchor_connected()
 {
     disconnected_anchors--;
 }
 
 
 void
-Receiver::service()
+receiver::service()
 {
     std::vector<SOCKET> active_sockets;
     
@@ -145,7 +145,7 @@ Receiver::service()
 }
 
 int
-Receiver::get_workers_number()
+receiver::get_workers_number()
 {
     int hw_concurrency = std::thread::hardware_concurrency();
  

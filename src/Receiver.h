@@ -3,7 +3,7 @@
 #pragma once
 
 #include "cfg.h"
-#include "packet_shunter.h"
+#include "collector.h"
 #include "sync_queue.h"
 #include "worker.h"
 #include <thread>
@@ -16,17 +16,17 @@ constexpr long int select_timeout_usec = 20000;
 constexpr int default_workers_number = 4;
 
 // forward declaration
-class Dealer;
+class dealer;
 
-class Receiver
+class receiver
 {
 
 public:
-    Receiver(
-        Dealer& dealer_ref, 
+    receiver(
+        dealer& dealer_ref, 
         std::shared_ptr<cfg::configuration> context_in,
         int anchors_number);
-	~Receiver();
+	~receiver();
 
     void start();
     void stop();
@@ -49,7 +49,7 @@ private:
 
 private:
     // reference to dealer
-    Dealer& broker;
+    dealer& broker;
 
     int anchors_nr = 0;
 

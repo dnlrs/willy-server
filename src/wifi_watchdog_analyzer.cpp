@@ -1,12 +1,10 @@
+#include "db.h"
+#include "dealer.h"
+#include "localization.h"
 #include <algorithm> /* std::foreach */
 #include <stdexcept>
 #include <utility>
-#include "Conf.h"
-#include "Dealer.h"
-#include "db.h"
 #include "utils.h"
-#include "Collector.h"
-#include "localization.h"
 
 // Link with all the need libs (this works only for the msvc compiler)
 #pragma comment(lib, "Ws2_32.lib")   //winSock library
@@ -25,7 +23,7 @@ std::string end_mess("\n\t*...<server closed>...*\t\n");
 using namespace std;
 
 
-void read_board_data(Receiver& receiver, mutex& printMtx, Dealer& dealer, db::database& db, Collector& collector)
+void read_board_data(receiver& receiver, mutex& printMtx, dealer& dealer, db::database& db, Collector& collector)
 {
 	printMtx.lock();
 	cout << "-- [RECEIVING THREAD] -- THREAD ID :" << this_thread::get_id() << ": receiving thread is active for board <"<< mactos(receiver.m_mac()) << ">" << endl;
@@ -149,7 +147,7 @@ int main()
 {
 	WSADATA wsaData;
 	
-	vector<Receiver> receivers;
+	vector<receiver> receivers;
 	// Initialize Winsock.
 	int iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
 	if (iResult != NO_ERROR) {
@@ -176,7 +174,7 @@ int main()
 		try
 		{
 			conf(); /* reads the next receiver info */
-			receivers.push_back(Receiver(conf.m_mac(), conf.m_x(), conf.m_y()));
+			receivers.push_back(receiver(conf.m_mac(), conf.m_x(), conf.m_y()));
 		}
 		catch (Conf_exception& conf_e)
 		{
@@ -190,8 +188,8 @@ int main()
     
 
 
-    //Dealer initialization
-	Dealer dealer(receivers);
+    //dealer initialization
+	dealer dealer(receivers);
 
 
 	/* =============================================
@@ -229,7 +227,7 @@ int main()
 	/* =============================================
 				REQUESTS LISTENING THREAD
 	============================================= */
-	thread listening_thread(&Dealer::accept_incoming_req, &dealer);
+	thread listening_thread(&dealer::accept_incoming_req, &dealer);
 
 
 	for (int i = 0; i < conf.m_recvn(); i++)
