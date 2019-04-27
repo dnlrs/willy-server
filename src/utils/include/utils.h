@@ -3,7 +3,7 @@
 #pragma once
 
 #include <string>
-#include <time.h>
+#include <ctime>
 
 constexpr int default_error_str_length = 1024; // for WSA error string formatting
 
@@ -14,6 +14,8 @@ std::string timetos(struct tm time);
 /* Converts epoch time to local time */
 struct tm epochTotm(const time_t rawtime);
 
+/* returns the current time of the system as time since epoch */
+uint64_t get_current_time();
 
 
 /* Converts a mac from string to byte format (host byte order) */
