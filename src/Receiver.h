@@ -5,12 +5,15 @@
 #include "cfg.h"
 #include "packet_shunter.h"
 #include "sync_queue.h"
+#include "worker.h"
 #include <thread>
 #include <atomic>
 
 constexpr long int default_sleep_ms    = 10;
 constexpr long int select_timeout_sec  = 0;
 constexpr long int select_timeout_usec = 20000;
+
+constexpr int default_workers_number = 4;
 
 // forward declaration
 class Dealer;
@@ -40,6 +43,8 @@ private:
      * (in order to empty socket buffers) but ignore it.
      */
     void service();
+
+    int get_workers_number();
     
 
 private:
@@ -65,6 +70,9 @@ private:
      * may only create it and pass it around 
      * */
     std::shared_ptr<packet_shunter> packet_collector = nullptr;
+
+    /* threads that deserialize raw buffers into packets */
+    std::vector<worker> workers;
 
     /* system wide configuration */
     std::shared_ptr<cfg::configuration> context = nullptr;

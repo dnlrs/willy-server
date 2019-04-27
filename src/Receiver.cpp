@@ -1,4 +1,5 @@
 #include "receiver.h"
+#include "Dealer.h"
 #include "net_exception.h"
 #include "recv_exception.h"
 #include "sized_buffer.hpp"
@@ -16,11 +17,7 @@ Receiver::Receiver(
         broker(dealer_ref),
         context(context_in),
         anchors_nr(anchors_number),
-        disconnected_anchors(anchors_number) 
-{
-    raw_packets_queue = std::make_shared<sync_queue>();
-    packet_collector  = std::make_shared<packet_shunter>(anchors_number);
-}
+        disconnected_anchors(anchors_number) {}
 
 Receiver::~Receiver()
 {
@@ -30,18 +27,44 @@ Receiver::~Receiver()
 
 void Receiver::start()
 {
+    raw_packets_queue = std::make_shared<sync_queue>();
+    packet_collector  = std::make_shared<packet_shunter>(context, anchors_nr);
+
+    int workers_nr = get_workers_number();
+
+    debuglog("deploying " + std::to_string(workers_nr) + " workers\n");
+    for (int i = 0; i < workers_nr; i++) {
+        worker new_worker(context, raw_packets_queue, packet_collector);
+        new_worker.start();
+        workers.push_back(new_worker);
+    }
+    
+    stop_working = false;
     receiver_thread = std::thread(&service, this);
 }
 
 void Receiver::stop()
 {
     stop_working = true;
+
+    for (worker& employee : workers)
+        employee.stop();
 }
 
 void Receiver::finish()
 {   
+    for (worker& employee : workers)
+        employee.finish();
+    workers.clear();
+
     if (receiver_thread.joinable())
         receiver_thread.join();
+
+    raw_packets_queue.reset();
+    raw_packets_queue = nullptr;
+
+    packet_collector.reset();
+    packet_collector = nullptr;
 }
 
 void
@@ -119,4 +142,21 @@ Receiver::service()
             broker.notify_fatal_error();
         }
     }
+}
+
+int
+Receiver::get_workers_number()
+{
+    int hw_concurrency = std::thread::hardware_concurrency();
+ 
+    if (hw_concurrency == 0)
+        return default_workers_number;
+
+    hw_concurrency -= 2;
+
+    if (hw_concurrency < default_workers_number)
+        return default_workers_number;
+
+
+    return hw_concurrency;
 }
