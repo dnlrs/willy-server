@@ -315,5 +315,6 @@ dealer::notify_anchor_disconnected(SOCKET dead_socket)
 void
 dealer::notify_fatal_error()
 {
+    debuglog("FATAL ERROR: fatal error notified, stopping dealer.\n");
     stop();
 }

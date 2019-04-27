@@ -16,15 +16,15 @@ class packet {
 public:
 
     packet(
-        uint32_t in_channel, 
-        int32_t  in_rssi,
-        uint32_t in_sequence_ctrl, 
-        uint32_t in_ssid_length,
-        uint64_t in_timestamp, 
-        uint64_t in_device_mac,
-        uint64_t in_anchor_mac, 
-        std::string in_ssid,
-        std::string in_hash) :
+        uint32_t in_channel = 0, 
+        int32_t  in_rssi = 0,
+        uint32_t in_sequence_ctrl = 0, 
+        uint32_t in_ssid_length = 0,
+        uint64_t in_timestamp = 0,
+        uint64_t in_device_mac = 0,
+        uint64_t in_anchor_mac = 0,
+        std::string in_ssid = "",
+        std::string in_hash = "") :
             channel(in_channel),
             rssi(in_rssi),
             sequence_ctrl(in_sequence_ctrl),
