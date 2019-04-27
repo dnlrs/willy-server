@@ -19,8 +19,8 @@ class collector {
 public:
     /* note: also opens a satabase connection */
     collector(
-        std::shared_ptr<cfg::configuration> context_in, 
-        int anchors_nr);
+        std::shared_ptr<cfg::configuration> context_in);
+
     ~collector();
 
     /* Adds a new packet to the container
@@ -60,6 +60,7 @@ private:
     void clean_container();
 
 
+private:
     int anchors_number = 0;
 
     /* [packet hash -> [anchor mac -> rssi measurement] */

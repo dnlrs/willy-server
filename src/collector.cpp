@@ -4,13 +4,12 @@
 #include <cassert>
 
 collector::collector(
-    std::shared_ptr<cfg::configuration> context_in,
-    int anchors_nr) :
-        context(context_in),
-        anchors_number(anchors_nr)
+    std::shared_ptr<cfg::configuration> context_in) :
+        context(context_in)
 {   
+    anchors_number = context->get_anchors_number();
     try {
-        db_storage = db::database("database.db", anchors_nr);
+        db_storage = db::database("database.db", anchors_number);
         db_storage.open(true);
     }
     catch (db::db_exception& dbe) {
