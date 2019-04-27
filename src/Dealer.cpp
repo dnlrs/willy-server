@@ -1,6 +1,9 @@
 #include "dealer.h"
 #include "utils.h"
+#include "socket_utils.h"
 #include "wARPtable.h"
+#include <ws2tcpip.h>
+#include <mstcpip.h>
 
 
 Dealer::Dealer()
@@ -28,18 +31,20 @@ void Dealer::init(std::string conf_file)
 
 void Dealer::start()
 {
-    // start receiver thread
+    // start receiver thread -- receiver::service
         // starts doing select on available sockets
         // if dealer says to ignore packets, ignores packets
-    // start worker threads
+    // start worker threads -- worker::service
         // waits on queue for packets to deserialize
         // deserializes packets, localizes devices, inserts packets into database
-    // start dealer thread
+    // start dealer thread -- service
 
+    // "go" to receiver thread
     // connect all anchors
     // connect_all_anchors();
-    // "go" to receiver thread
 }
+
+
 void Dealer::stop()
 {
 
@@ -55,6 +60,9 @@ void Dealer::setup_listening_socket()
 	if (listening_socket == INVALID_SOCKET) 
         throw net_exception(
             "listening_socket creation fail\n" + wsa_etos(WSAGetLastError()));
+
+    // set non blocking socket - TODO: make it unblocking and add max attempts in connect_anchor()
+    //set_non_blocking_socket(listening_socket);
 	
 	// local endpoint parameters for listening socket (addr. family, IP, port)
 	struct sockaddr_in service;
@@ -135,6 +143,9 @@ Dealer::add_connected_anchor(
     anchors[anchor_mac]       = new_anchor;
     mac_to_socket[anchor_mac] = new_socket;
     socket_to_mac[new_socket] = anchor_mac;
+
+    // notify receiver that a new anchor connected
+    collector.notify_anchor_connected();
 }
 
 void
@@ -144,9 +155,15 @@ Dealer::remove_connected_anchor(
     std::lock_guard<std::recursive_mutex> guard(anchors_rmtx);
     
     SOCKET old_socket = mac_to_socket[anchor_mac];
-    anchors.erase(anchor_mac);
-    mac_to_socket.erase(anchor_mac);
-    socket_to_mac.erase(old_socket);
+    
+    if (anchors.find(anchor_mac) != anchors.end())
+        anchors.erase(anchor_mac);
+    
+    if (mac_to_socket.find(anchor_mac) != mac_to_socket.end())
+        mac_to_socket.erase(anchor_mac);
+    
+    if (socket_to_mac.find(old_socket) != socket_to_mac.end())
+        socket_to_mac.erase(old_socket);
 
     if (old_socket != INVALID_SOCKET) {
         if (shutdown(old_socket, SD_SEND) == SOCKET_ERROR)
@@ -187,6 +204,9 @@ Dealer::connect_anchor(SOCKET* rsocket)
     // set socket option SO_KEEPALIVE
     set_keepalive_option(new_socket);
 
+    // set non-blocking socket
+    set_non_blocking_socket(new_socket);
+
     // send connection ack
     send_connection_ack(new_socket);
 
@@ -196,21 +216,7 @@ Dealer::connect_anchor(SOCKET* rsocket)
 }
 
 
-void 
-Dealer::set_keepalive_option(const SOCKET anchor_socket)
-{
-    if (anchor_socket == INVALID_SOCKET)
-        throw net_exception("Cannot set option on invalid socket");
 
-    int  err = SOCKET_ERROR;
-    bool opt_value = true;
-    
-    err = setsockopt(anchor_socket, SOL_SOCKET, SO_KEEPALIVE, 
-                     (const char*) &opt_value, sizeof(bool));
-    if (err == SOCKET_ERROR)
-        throw net_exception("Setting socket option KEEPALIVE failed\n" +
-            wsa_etos(WSAGetLastError()));
-}
 
 void 
 Dealer::send_connection_ack(const SOCKET anchor_socket)
@@ -235,32 +241,48 @@ Dealer::send_connection_ack(const SOCKET anchor_socket)
     }
 }
 
-
-void Dealer::notify_fatal_err()
+uint64_t
+Dealer::get_anchor_mac(SOCKET in_socket)
 {
-	lock_guard<mutex> lg(this->fatalErrMtx);
-	if (this->fatal_error)
-		return;
-	this->fatal_error = true;
-	//close all receivers socket to unlock them from the recv(). The closesocket() is blocked until all the incoming data has been received
-	for (Receiver r : this->recvs)
-		closesocket(r.m_sock());
+    std::lock_guard<std::recursive_mutex> guard(anchors_rmtx);
+    // TODO: what if wrong socket in?
+    return socket_to_mac[in_socket];
 }
 
-boolean Dealer::in_err()
+std::vector<SOCKET> 
+Dealer::get_opened_sockets()
 {
-	lock_guard<mutex> lg(this->fatalErrMtx);
-	return this->fatal_error;
-}
+    std::vector<SOCKET> rval;
 
-std::map<uint64_t, Point2d> Dealer::get_anchor_positions()
-{
-    std::map<uint64_t, Point2d> rval;
+    std::lock_guard<std::recursive_mutex> guard(anchors_rmtx);
 
-    std::lock_guard<std::mutex> guard(recvs_mtx);
+    for (auto soc_pair : socket_to_mac)
+        rval.push_back(soc_pair.first);
 
-    for (Receiver const &r: recvs)
-        rval[r.m_mac().compacted_mac] = r.m_loc();
-    
     return rval;
 }
+
+void
+Dealer::notify_anchor_disconnected(SOCKET dead_socket)
+{
+    // TODO: wake-up thread
+}
+
+void
+Dealer::notify_fatal_error()
+{
+    // TODO: close everything
+}
+
+//std::map<uint64_t, Point2d> 
+//Dealer::get_anchor_positions()
+//{
+//    std::map<uint64_t, Point2d> rval;
+//
+//    std::lock_guard<std::mutex> guard(recvs_mtx);
+//
+//    for (Receiver const &r: recvs)
+//        rval[r.m_mac().compacted_mac] = r.m_loc();
+//    
+//    return rval;
+//}

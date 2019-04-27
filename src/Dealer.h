@@ -11,8 +11,8 @@
 #include <mutex>
 #include <list>
 #include <winsock2.h>
-#include "Net_exception.h"
-#include "Receiver.h"
+#include "net_exception.h"
+#include "receiver.h"
 
 #define SERVICE_PORT 27015 /* port used for the connection with the receivers */
 
@@ -29,8 +29,18 @@ public:
 
     /* reads configuration file */
     void init(std::string conf_file);
+
     void start();
+    
     void stop();
+    
+    void finish();
+
+    uint64_t get_anchor_mac(SOCKET in_socket);
+    std::vector<SOCKET> get_opened_sockets();
+    void notify_anchor_disconnected(SOCKET dead_socket);
+    void notify_fatal_error();
+
 
 private:
 	/* Setups the listening_socket for the server */
@@ -53,10 +63,6 @@ private:
     void send_connection_ack(
         const SOCKET anchor_socket);
     
-    /* sets the SO_KEEPALIVE option */
-    void set_keepalive_option(
-        const SOCKET anchor_socket);
-
     /* Adds a new connected anchor
      * 
      * If the new anchor had already a previous opened 
@@ -78,41 +84,25 @@ private:
     void remove_connected_anchor(
         const uint64_t anchor_mac);
 
-	Dealer(vector<Receiver>& receivers) : listening_socket(INVALID_SOCKET), recvs(receivers), fatal_error(false){}
-
-	//returns the print mutex object
-	mutex& getprintMtx() { return this->printMtx; }
-	//it closes all the receivers socket and notify them to exit. Call it in order to close the server
-	void notify_fatal_err();
-	//it says if fatal_error is set
-	boolean in_err();
-	//closes the listening socket
-	void close_listening() { closesocket(this->listening_socket); }
-    //returns positions of all connected anchors
-    std::map<uint64_t, Point2d> get_anchor_positions();
+    //std::map<uint64_t, Point2d> get_anchor_positions();
 
 
 
-private:
+    void service();
+
+
     wwsadata data;
 
-private:
     cfg::configuration context;
 	SOCKET listening_socket = INVALID_SOCKET;
 
-private:
     std::map<uint64_t, anchor>  anchors;        // {mac, anchor}
     std::map<uint64_t, SOCKET>  mac_to_socket;  // {mac, socket}
     std::map<SOCKET, uint64_t>  socket_to_mac;  // {socket, mac}
     std::recursive_mutex        anchors_rmtx;
 
+    Receiver collector;
 
-	vector<Receiver>& recvs;
-	mutex printMtx;
-	mutex fatalErrMtx;
-	boolean fatal_error; //set if one receiver thread is exited
-
-    std::mutex recvs_mtx;
 };
 
 #endif // !DEALER_H_INCLUDED
