@@ -26,6 +26,12 @@ void set_keepalive_option(
 void set_non_blocking_socket(
     const SOCKET socket_in);
 
+
+/* gracefully closes the socket connection
+ * and marks socket as invalid 
+ * */
+void close_connection(SOCKET* psocket);
+	
 /* Reads a message size and a message from the socket
  * 
  * First reads the numbers of bytes to be read (as uint32_t) then reads 

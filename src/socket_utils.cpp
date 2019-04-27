@@ -1,6 +1,7 @@
+#include "logger.h"
+#include "net_exception.h"
 #include "socket_utils.h"
 #include "sock_exception.h"
-#include "net_exception.h"
 #include "utils.h"
 #include <cassert>
 #include <mstcpip.h>
@@ -64,6 +65,25 @@ set_non_blocking_socket(
             "Cannot set non-blocking mode on socket\n", WSAGetLastError());
 }
 
+
+void
+close_connection(SOCKET* psocket)
+{
+	if (psocket == nullptr)
+		return;
+	
+	if (*psocket == INVALID_SOCKET)
+		return;
+	
+	if (shutdown(*psocket, SD_SEND) == SOCKET_ERROR)
+        debuglog("shutdown socket error or UDP socket (no harm)\n",
+            wsa_etos(WSAGetLastError()));
+
+    if (closesocket(*psocket) == SOCKET_ERROR)
+        debuglog("closesocket error: ", wsa_etos(WSAGetLastError()));
+    
+    *psocket = INVALID_SOCKET;
+}
 
 uint32_t 
 read_sized_message(
