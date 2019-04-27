@@ -29,13 +29,7 @@
     <ClInclude Include="include\wwsadata.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\sized_buffer.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\packet_shunter.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\sync_queue.h">
+    <ClInclude Include="include\Point2d.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -43,10 +37,7 @@
     <ClCompile Include="src\utils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\packet_shunter.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\sync_queue.cpp">
+    <ClCompile Include="src\Point2d.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

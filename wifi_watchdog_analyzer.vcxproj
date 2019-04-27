@@ -54,9 +54,10 @@
   <ItemGroup>
     <ClCompile Include="src\Conf.cpp" />
     <ClCompile Include="src\Dealer.cpp" />
-    <ClCompile Include="src\Point2d.cpp" />
+    <ClCompile Include="src\packet_shunter.cpp" />
     <ClCompile Include="src\Receiver.cpp" />
     <ClCompile Include="src\socket_utils.cpp" />
+    <ClCompile Include="src\sync_queue.cpp" />
     <ClCompile Include="src\wARPtable.cpp" />
     <ClCompile Include="src\wifi_watchdog_analyzer.cpp" />
     <ClCompile Include="src\worker.cpp" />
@@ -67,11 +68,13 @@
     <ClInclude Include="src\Dealer.h" />
     <ClInclude Include="src\localization.h" />
     <ClInclude Include="src\net_exception.h" />
-    <ClInclude Include="src\Point2d.h" />
+    <ClInclude Include="src\packet_shunter.h" />
     <ClInclude Include="src\Receiver.h" />
     <ClInclude Include="src\recv_exception.h" />
+    <ClInclude Include="src\sized_buffer.hpp" />
     <ClInclude Include="src\socket_utils.h" />
     <ClInclude Include="src\sock_exception.h" />
+    <ClInclude Include="src\sync_queue.h" />
     <ClInclude Include="src\wARPtable.h" />
     <ClInclude Include="src\worker.h" />
   </ItemGroup>
