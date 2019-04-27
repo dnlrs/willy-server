@@ -34,8 +34,12 @@ namespace db {
     {
     public:
 
-        database(std::string dbName, int anchorsNr) :
-            db(nullptr), db_name(dbName), db_anchors_nr(anchorsNr) {};
+        database(
+            std::string dbName = std::string("database.db"), 
+            int anchorsNr = 0) :
+                db(nullptr), 
+                db_name(dbName), 
+                db_anchors_nr(anchorsNr) {};
 
         /* Close connection to database if open */
         ~database() 
