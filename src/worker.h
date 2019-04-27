@@ -19,8 +19,13 @@ public:
         std::shared_ptr<collector>  collector_in);
 	~worker();
 	
+    /* Deploys the worker thread */
 	void start();
+
+    /* Stops the worker thread */
 	void stop();
+
+    /* joins the worker thread */
 	void finish();
 	
 private:

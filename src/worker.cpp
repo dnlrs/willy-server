@@ -18,6 +18,10 @@ worker::~worker()
 void
 worker::start()
 {
+    /* Assuring a clean state before starting */
+    stop();
+    finish();
+
     stop_working  = false;
     worker_thread = std::thread(&service, this);
 }
