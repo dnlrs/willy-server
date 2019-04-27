@@ -1,5 +1,5 @@
-#ifndef PACKET_SHUNTER_H_INCLUDED
-#define PACKET_SHUNTER_H_INCLUDED
+#ifndef COLLECTOR_H_INCLUDED
+#define COLLECTOR_H_INCLUDED
 #pragma once
 
 #include "db.h"
@@ -14,14 +14,14 @@
 constexpr long int default_max_container_size = 1000;
 constexpr uint64_t default_max_timestamp_diff = 10; // seconds
 
-class packet_shunter {
+class collector {
 
 public:
     /* note: also opens a satabase connection */
-    packet_shunter(
+    collector(
         std::shared_ptr<cfg::configuration> context_in, 
         int anchors_nr);
-    ~packet_shunter();
+    ~collector();
 
     /* Adds a new packet to the container
      *
@@ -76,4 +76,4 @@ private:
     db::database db_storage;
 };
 
-#endif // !PACKET_SHUNTER_H_INCLUDED
+#endif // !COLLECTOR_H_INCLUDED

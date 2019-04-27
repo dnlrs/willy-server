@@ -1,9 +1,9 @@
-#include "packet_shunter.h"
+#include "collector.h"
 #include "shunter_exception.h"
 #include "localization.h"
 #include <cassert>
 
-packet_shunter::packet_shunter(
+collector::collector(
     std::shared_ptr<cfg::configuration> context_in,
     int anchors_nr) :
         context(context_in),
@@ -14,17 +14,17 @@ packet_shunter::packet_shunter(
         db_storage.open(true);
     }
     catch (db::db_exception& dbe) {
-        throw shunter_exception("ctor failed because database failed");
+        throw coll_exception("ctor failed because database failed");
     }
 }
 
-packet_shunter::~packet_shunter()
+collector::~collector()
 {
     db_storage.quit();
 }
 
 void
-packet_shunter::submit_packet(packet new_packet)
+collector::submit_packet(packet new_packet)
 {
     std::unique_lock<std::mutex> guard(packets_lock);
 
@@ -53,7 +53,7 @@ packet_shunter::submit_packet(packet new_packet)
 }
 
 device
-packet_shunter::process_readings(
+collector::process_readings(
     packet new_packet,
     std::map<uint64_t, int32_t> readings)
 {
@@ -68,7 +68,7 @@ packet_shunter::process_readings(
                         anchor_coordinates  /* returned pair */);
         
         if (valid_position == false)
-            throw shunter_exception("no anchor exists with specified mac");
+            throw coll_exception("no anchor exists with specified mac");
         
         Point2d anchor_point(
                     anchor_coordinates.first, 
@@ -90,7 +90,7 @@ packet_shunter::process_readings(
 }
 
 void
-packet_shunter::store_data(
+collector::store_data(
     packet new_packet,
     device new_device)
 {
@@ -99,12 +99,12 @@ packet_shunter::store_data(
         db_storage.add_device(new_device);
     }
     catch (db::db_exception& dbe) {
-        throw shunter_exception("store_data: failed, persistence layer fail");
+        throw coll_exception("store_data: failed, persistence layer fail");
     }
 }
 
 void
-packet_shunter::clean_container()
+collector::clean_container()
 {
     uint64_t current_time = get_current_time();
 

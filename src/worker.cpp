@@ -4,7 +4,7 @@
 worker::worker(
     std::shared_ptr<cfg::configuration> context_in,
     std::shared_ptr<sync_queue>         shared_raw_buffers,
-    std::shared_ptr<packet_shunter>     collector_in) :
+    std::shared_ptr<collector>     collector_in) :
         context(context_in),
         raw_packets_queue(shared_raw_buffers),
         collector(collector_in) {}

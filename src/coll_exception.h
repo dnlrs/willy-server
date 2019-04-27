@@ -1,20 +1,20 @@
-#ifndef SHUNTER_EXCEPTION_H_INCLUDED
-#define SHUNTER_EXCEPTION_H_INCLUDED
+#ifndef COLL_EXCEPTION_H_INCLUDED
+#define COLL_EXCEPTION_H_INCLUDED
 #pragma once
 
 #include "logger.h"
 
-class shunter_exception :
+class coll_exception :
     public std::exception
 {
 public:
-    shunter_exception() : 
+    coll_exception() : 
         errmsg("SHUNTER_EXCEPTION: unknown") 
     {
         debuglog(errmsg);
     }
 
-    shunter_exception(std::string msg) : 
+    coll_exception(std::string msg) : 
         errmsg("SHUNTER_EXCEPTION: " + msg) 
     {
         debuglog(errmsg);
@@ -29,4 +29,4 @@ private:
 };
 
 
-#endif // !SHUNTER_EXCEPTION_H_INCLUDED
+#endif // !COLL_EXCEPTION_H_INCLUDED

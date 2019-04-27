@@ -28,7 +28,7 @@ Receiver::~Receiver()
 void Receiver::start()
 {
     raw_packets_queue = std::make_shared<sync_queue>();
-    packet_collector  = std::make_shared<packet_shunter>(context, anchors_nr);
+    packet_collector  = std::make_shared<collector>(context, anchors_nr);
 
     int workers_nr = get_workers_number();
 

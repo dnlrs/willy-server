@@ -33,10 +33,10 @@
     <ClCompile Include="src\worker.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\packet_shunter.cpp">
+    <ClCompile Include="src\sync_queue.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\sync_queue.cpp">
+    <ClCompile Include="src\collector.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -68,16 +68,16 @@
     <ClInclude Include="src\worker.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\packet_shunter.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\sized_buffer.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\sync_queue.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\shunter_exception.h">
+    <ClInclude Include="src\collector.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\coll_exception.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

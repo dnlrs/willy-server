@@ -69,7 +69,7 @@ private:
      * This container is shared only among workers, the receiver 
      * may only create it and pass it around 
      * */
-    std::shared_ptr<packet_shunter> packet_collector = nullptr;
+    std::shared_ptr<collector> packet_collector = nullptr;
 
     /* threads that deserialize raw buffers into packets */
     std::vector<worker> workers;
