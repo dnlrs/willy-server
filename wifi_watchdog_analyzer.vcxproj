@@ -45,18 +45,19 @@
     <Link>
       <SubSystem>Console</SubSystem>
     </Link>
+    <ClCompile />
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <Link>
       <SubSystem>Console</SubSystem>
     </Link>
+    <ClCompile />
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\dealer.cpp" />
     <ClCompile Include="src\collector.cpp" />
     <ClCompile Include="src\receiver.cpp" />
     <ClCompile Include="src\socket_utils.cpp" />
-    <ClCompile Include="src\sync_queue.cpp" />
     <ClCompile Include="src\wARPtable.cpp" />
     <ClCompile Include="src\wifi_watchdog_analyzer.cpp" />
     <ClCompile Include="src\worker.cpp" />

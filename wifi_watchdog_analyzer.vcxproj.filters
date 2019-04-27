@@ -33,9 +33,6 @@
     <ClCompile Include="src\worker.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\sync_queue.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\collector.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
