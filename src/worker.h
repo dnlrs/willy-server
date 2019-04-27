@@ -15,8 +15,8 @@ class worker {
 public:
 	worker(
         std::shared_ptr<cfg::configuration> context_in,
-        std::shared_ptr<sync_queue>         shared_raw_buffers,
-        std::shared_ptr<collector>     collector_in);
+        std::shared_ptr<sync_queue> shared_raw_buffers,
+        std::shared_ptr<collector>  collector_in);
 	~worker();
 	
 	void start();
@@ -53,13 +53,13 @@ private:
      * Within this collector there is the database connection
      * and necessary calls for device localization 
      * */
-    std::shared_ptr<collector> collector = nullptr;
+    std::shared_ptr<collector> packet_collector = nullptr;
 
     /* reference to the actual worker thread */
     std::thread worker_thread;
 
     /* system wide configuration */
-    std::shared_ptr<cfg::configuration> context   = nullptr;
+    std::shared_ptr<cfg::configuration> context = nullptr;
 };
 
 #endif // !WORKER_H_INCLUDED

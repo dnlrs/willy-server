@@ -3,11 +3,11 @@
 
 worker::worker(
     std::shared_ptr<cfg::configuration> context_in,
-    std::shared_ptr<sync_queue>         shared_raw_buffers,
-    std::shared_ptr<collector>     collector_in) :
+    std::shared_ptr<sync_queue> shared_raw_buffers,
+    std::shared_ptr<collector>  collector_in) :
         context(context_in),
         raw_packets_queue(shared_raw_buffers),
-        collector(collector_in) {}
+        packet_collector(collector_in) {}
 
 worker::~worker()
 {
@@ -47,7 +47,7 @@ worker::service()
         packet new_packet     = deserialize(buffer);
         new_packet.anchor_mac = buffer.anchor_mac;
 
-        collector->submit_packet(new_packet);
+        packet_collector->submit_packet(new_packet);
     }
 }
 
