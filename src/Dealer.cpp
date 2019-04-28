@@ -18,7 +18,7 @@ dealer::dealer()
 dealer::~dealer()
 {
     clear_state();
-    close_connection(&listening_socket);
+    closesocket(listening_socket);
 }
 
 
@@ -31,6 +31,7 @@ void dealer::init(std::string conf_file)
     context->import_configuration(conf_file, true);
     if (context->get_anchors_number() == 0)
         throw net_exception("No anchors found in configuration file");
+    debuglog("dealer::init: configuration imported correctly");
 
     // setup listening socket
     setup_listening_socket();
@@ -83,6 +84,7 @@ void dealer::clear_state()
 void
 dealer::service()
 {
+    debuglog("dealer::service: dealer started");
     debuglog("Waiting for ", dead_anchors->load(), " anchors to connect...");
 
     std::unique_lock<std::mutex> guard(anchors_rmtx);
@@ -103,6 +105,13 @@ dealer::service()
 
             SOCKET new_socket = INVALID_SOCKET;
             anchor new_anchor = connect_anchor(&new_socket);
+
+            if (new_socket == INVALID_SOCKET) {
+                debuglog(
+                    "dealer::service: no anchor connected"
+                    "after all attempts, trying again...");
+                continue;
+            }
 
             std::pair<double, double> new_anchor_position(0, 0);
             bool rs = context->get_anchor_position(
@@ -127,6 +136,7 @@ dealer::service()
             }
         }
     }
+    debuglog("dealer::service: dealer stopped");
 }
 
 void dealer::setup_listening_socket()
@@ -140,8 +150,8 @@ void dealer::setup_listening_socket()
         throw net_exception(
             "listening_socket creation fail\n" + wsa_etos(WSAGetLastError()));
 
-    // TODO: make it unblocking and add max attempts in connect_anchor()
-    //set_non_blocking_socket(listening_socket);
+    // make listening socket non-blocking
+    set_non_blocking_socket(listening_socket);
 	
 	// local endpoint parameters for listening socket (addr. family, IP, port)
 	struct sockaddr_in service;
@@ -224,13 +234,37 @@ dealer::connect_anchor(SOCKET* rsocket)
     size_t anchor_sa_size = sizeof(anchor_sa);
     memset(&anchor_sa, 0, anchor_sa_size);
 
-    SOCKET new_socket = 
-        ::accept(listening_socket, (sockaddr*) &anchor_sa, (int*) &anchor_sa_size);
+    int    attempts   = dealer_max_accept_attempts;
+    SOCKET new_socket = INVALID_SOCKET;
+    while (attempts > 0 && new_socket == INVALID_SOCKET) {
+        new_socket = 
+            ::accept(listening_socket, (sockaddr*) &anchor_sa, (int*) &anchor_sa_size);
+        
+        if (new_socket == INVALID_SOCKET) {
+            int wsa_err = WSAGetLastError();
+            
+            switch (wsa_err) {
+            case WSAEWOULDBLOCK:
+                std::this_thread::sleep_for(
+                    std::chrono::milliseconds(dealer_waiting_time_ms));
+                attempts--;
+                break;
+            case WSAECONNRESET:
+                attempts = dealer_max_accept_attempts;
+                break;
+            default:
+                throw net_exception("Accept failed while connecting an anchor\n" + 
+                    wsa_etos(WSAGetLastError()));
+                break;
+            }
+        }
+    }
 
-    if (new_socket == INVALID_SOCKET)
-        throw net_exception("Accept failed while connecting an anchor\n" + 
-            wsa_etos(WSAGetLastError()));
-    
+    if (attempts <= 0) {
+        *rsocket = INVALID_SOCKET;
+        return anchor();
+    }
+
     // get anchor mac
     wARPtable arp_table;
     uint64_t new_mac = arp_table.get_mac_from_ip(anchor_sa.sin_addr.s_addr);

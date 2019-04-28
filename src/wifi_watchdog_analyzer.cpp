@@ -16,7 +16,10 @@ int main()
 
     dealer.start();
 
-    std::this_thread::yield();
+    int i = 20;
+    while (i-- > 0) {
+        std::this_thread::sleep_for(std::chrono::seconds(5));
+    }
 
     return 0;
 }

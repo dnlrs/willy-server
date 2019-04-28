@@ -42,6 +42,7 @@ worker::finish()
 void
 worker::service()
 {
+    debuglog("worker::service: worker started [ ", std::this_thread::get_id(), "]");
     while (stop_working == false) {
         sized_buffer buffer = raw_packets_queue->pop();
 
@@ -53,6 +54,7 @@ worker::service()
 
         packet_collector->submit_packet(new_packet);
     }
+    debuglog("worker::service: worker stopped [ ", std::this_thread::get_id(), "]");
 }
 
 

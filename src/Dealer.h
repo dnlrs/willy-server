@@ -24,6 +24,8 @@
 
 constexpr long int dealer_waiting_time_ms = 20;
 
+constexpr int dealer_max_accept_attempts = 10;
+
 /*
  * The dealer is the one who is in charge to handle the connection with the 
  * boards when the game starts and whenever issues coming. 
