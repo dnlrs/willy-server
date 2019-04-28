@@ -22,9 +22,8 @@
 /* port used for the connection with the receivers */
 #define SERVICE_PORT 27015 
 
-constexpr long int dealer_waiting_time_ms = 20;
-
-constexpr int dealer_max_accept_attempts = 10;
+constexpr long int dealer_waiting_time_ms     = 20;
+constexpr int      dealer_max_accept_attempts = 10;
 
 /*
  * The dealer is the one who is in charge to handle the connection with the 

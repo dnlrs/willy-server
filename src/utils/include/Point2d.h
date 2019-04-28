@@ -1,26 +1,32 @@
+#ifndef POINT2D_H_INCLUDED
+#define POINT2D_H_INCLUDED
 #pragma once
-#include <cmath>
+
 #include <string>
-#include <sstream>
+#include <utility>
 
-using namespace std;
-
-class Point2d
+class point2d
 {
 public:
-	Point2d() {};
-	Point2d(double x, double y);
-	static double computing_distance(const Point2d& p1, const Point2d& p2);
-	~Point2d();
-	string point_print() const { stringstream ss; ss << "(" << this->x << ", " << this->y << ")"; return ss.str(); };
-	double m_x() const { return this->x; }
-	double m_y() const { return this->y; }
-	static Point2d middle(const Point2d p1, const Point2d p2);
-	static bool is_smaller(const Point2d& p1, const Point2d& p2); // returns true is p1 is to the left in the respect of p2
-	bool operator== (const Point2d& p) const { return (this->x == p.x && this->y == p.y); };
-	bool operator!= (const Point2d& p) const { return !(*this == p); };
-private:
+    point2d(double x_in = 0.0, double y_in = 0.0) : 
+        x(x_in), y(y_in) {}
+    point2d(std::pair<double, double> xy_coordinates) : 
+        x(xy_coordinates.first), y(xy_coordinates.second) {}
+    
+    ~point2d() {}
+
+    bool operator<(const point2d& other) const;
+    bool operator==(const point2d& other) const;
+    bool operator!=(const point2d& other) const;
+    
+    std::string to_string() const;
+
+    friend double  compute_distance(const point2d& p1, const point2d& p2);
+	friend point2d compute_middle_point(const point2d p1, const point2d p2);
+
+public:
 	double x;
 	double y;
 };
 
+#endif // !POINT2D_H_INCLUDED

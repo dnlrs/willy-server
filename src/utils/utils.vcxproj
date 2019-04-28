@@ -14,12 +14,12 @@
     <ClInclude Include="include\anchor.h" />
     <ClInclude Include="include\device.h" />
     <ClInclude Include="include\packet.h" />
-    <ClInclude Include="include\Point2d.h" />
+    <ClInclude Include="include\point2d.h" />
     <ClInclude Include="include\utils.h" />
     <ClInclude Include="include\wwsadata.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\Point2d.cpp" />
+    <ClCompile Include="src\point2d.cpp" />
     <ClCompile Include="src\utils.cpp" />
   </ItemGroup>
   <ItemGroup>

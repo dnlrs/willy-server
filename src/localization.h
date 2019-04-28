@@ -5,9 +5,7 @@
 #include <cstdarg>
 #include <utility> // for swap
 #include <vector>
-#include "Point2d.h"
-//#include "Line2d.h"
-
+#include "point2d.h"
 
 #define C 0  // no shadowing effect: shadowing effect occurs when there are obstacles between sender and receiver
 #define n 1.6 //2.7
@@ -69,21 +67,21 @@ Point2d trilat(vector<pair<Point2d, int>> args)
 */
 
 /* pair : BOARD position, RSSI */
-Point2d weighted_loc(vector<pair<Point2d, int>> args)
+point2d weighted_loc(vector<pair<point2d, int>> args)
 {
-	double totweight = 0,
-		weighted_y = 0,
-		weighted_x = 0;
+    double totweight  = 0;
+    double weighted_y = 0;
+    double weighted_x = 0;
 	double curr_weight;
 
-	for (pair<Point2d, int> p : args)
+	for (pair<point2d, int> p : args)
 	{
 		curr_weight = (double)1/rssitod(p.second); // TODO: try also 1/d^2
-		weighted_x += p.first.m_x() * curr_weight;
-		weighted_y += p.first.m_y() * curr_weight;
+		weighted_x += p.first.x * curr_weight;
+		weighted_y += p.first.y * curr_weight;
 		totweight += curr_weight;
 	}
-	return Point2d((double)weighted_x/totweight, (double)weighted_y/totweight);
+	return point2d((double)weighted_x/totweight, (double)weighted_y/totweight);
 }
 
 

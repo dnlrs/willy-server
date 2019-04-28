@@ -1,33 +1,45 @@
-#include "Point2d.h"
+#include "point2d.h"
+#include <cmath>
 
-
-Point2d::Point2d(double x, double y)
-{
-	this->x = x; this->y = y;
-}
-
-
-double Point2d::computing_distance(const Point2d& p1, const Point2d& p2)
+double compute_distance(const point2d& p1, const point2d& p2)
 { 
-	return sqrt(pow(p1.m_y() - p2.m_y(), 2) + pow(p1.m_x() - p2.m_x(), 2));
+	return sqrt(pow(p1.x - p2.x, 2) + pow(p1.y - p2.y, 2));
 }
 
-Point2d Point2d::middle(Point2d p1, Point2d p2)
+point2d compute_middle_point(const point2d p1, const point2d p2)
 {
-	double x_midd = (p1.m_x() + p2.m_x()) / 2;
-	double y_midd = (p1.m_y() + p2.m_y()) / 2;
-	return Point2d(x_midd, y_midd);
+    return point2d((p1.x + p2.x)/2, (p1.y + p2.y)/2);
 }
 
-bool Point2d::is_smaller(const Point2d& p1, const Point2d& p2)
+bool 
+point2d::operator<(const point2d& other) const 
 {
-	if (p1 == p2)
-		return false;
-	if (p1.m_x() == p2.m_x())
-		return (p1.m_y() < p2.m_y());
-	return (p1.m_x() < p2.m_x());
+
+    if (x == other.x) {
+        if (y == other.y) {
+            return false;
+        }
+        return (y < other.y);
+    }
+
+    return (x < other.x);
 }
 
-Point2d::~Point2d()
+bool 
+point2d::operator==(const point2d& other) const 
 {
+    return (x == other.x && y == other.y);
+}
+
+bool
+point2d::operator!=(const point2d& other) const 
+{
+    return (x != other.x || y != other.y);
+}
+
+std::string
+point2d::to_string() const 
+{
+    return std::string(
+        "(" + std::to_string(x) + ", " + std::to_string(y) + ")");
 }

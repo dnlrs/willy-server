@@ -56,7 +56,7 @@ collector::process_readings(
     packet new_packet,
     std::map<uint64_t, int32_t> readings)
 {
-    std::vector<std::pair<Point2d, int>> measurements;
+    std::vector<std::pair<point2d, int>> measurements;
 
     for (auto reading : readings) {
 
@@ -69,20 +69,17 @@ collector::process_readings(
         if (valid_position == false)
             throw coll_exception("no anchor exists with specified mac");
         
-        Point2d anchor_point(
-                    anchor_coordinates.first, 
-                    anchor_coordinates.second);
-
-        measurements.push_back(std::make_pair(anchor_point, reading.second));
+        point2d anchor_position(anchor_coordinates);
+        measurements.push_back(std::make_pair(anchor_position, reading.second));
     }
 
     assert(measurements.size() == anchors_number);
 
-    Point2d device_position = weighted_loc(measurements);
+    point2d device_position = weighted_loc(measurements);
 
     device rval(
         new_packet.device_mac, new_packet.timestamp, 
-        device_position.m_x(), device_position.m_y());
+        device_position.x, device_position.y);
 
     debuglog("new device localized:\n" + rval.to_string());
     return rval;
