@@ -127,7 +127,7 @@ dealer::service()
                 add_connected_anchor(new_socket, new_anchor);
 
                 dead_anchors->fetch_sub(1);
-                debuglog("New anchor connected: ", mac_int2str(new_anchor.get_mac()));
+                debuglog("New anchor connected: ", new_anchor.to_string());
             }
             else {
                 debuglog("Anchor " + mac_int2str(new_anchor.get_mac()) +

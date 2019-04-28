@@ -28,6 +28,10 @@ std::string mac_int2str(const uint64_t mac);
 int mac_is_valid(const char* mac);
 
 
+/* Converts an ip from byte format (host byte order) to string */
+std::string ip_int2str(const uint64_t ip);
+
+
 // string format checking
 int str_is_valid_int(const char* str);
 int str_is_valid_double(const char* str);

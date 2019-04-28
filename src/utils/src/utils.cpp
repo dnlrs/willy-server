@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 #include <algorithm>
+#include "ws2tcpip.h"
 #include <windows.h> // windef.h - do not include directly
 
 
@@ -104,6 +105,24 @@ int mac_is_valid(const char* mac)
     }
     return (i == 12 && (s == 5 || s == 0));
 }
+
+constexpr size_t af_inet_address_size = 16;
+
+std::string ip_int2str(const uint64_t ip)
+{
+    char str[INET_ADDRSTRLEN+1]; // 192.168.255.255[:port]
+    memset(&str[0], 0, INET_ADDRSTRLEN+1);
+
+    uint64_t lip = ip;
+
+    int rc = inet_pton(AF_INET, &str[0], &lip);
+    if (rc != 1)
+        return std::string("");
+
+    str[INET_ADDRSTRLEN - 1];
+    return std::string(str);
+}
+
 
 int
 str_is_valid_int(const char* str)

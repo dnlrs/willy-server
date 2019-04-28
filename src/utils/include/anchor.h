@@ -1,7 +1,9 @@
 #ifndef ANCHOR_H_INCLUDED
 #define ANCHOR_H_INCLUDED
 
+#include "utils.h"
 #include <cstdint>
+#include <string>
 #include <utility>
 
 class anchor
@@ -92,10 +94,19 @@ public:
     double   get_position_x() const { return position_x; }
     double   get_position_y() const { return position_y; };
 
+    std::string to_string() const 
+    {
+        return std::string(
+            "mac: " + mac_int2str(mac) + 
+            " ip: " + ip_int2str(addr) +
+            " pos: " + std::to_string(position_x) + ", " + std::to_string(position_y));
+    }
+
 private:
     uint64_t mac;
     uint64_t addr;
 
+    // TODO: use point2d instead
     double position_x;
     double position_y;
 
