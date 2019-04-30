@@ -38,7 +38,7 @@ point2d::operator!=(const point2d& other) const
 }
 
 std::string
-point2d::to_string() const 
+point2d::str() const 
 {
     return std::string(
         "(" + std::to_string(x) + ", " + std::to_string(y) + ")");

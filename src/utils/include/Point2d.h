@@ -18,8 +18,10 @@ public:
     bool operator<(const point2d& other) const;
     bool operator==(const point2d& other) const;
     bool operator!=(const point2d& other) const;
+
+    void clear() { x = 0; y = 0; }
     
-    std::string to_string() const;
+    std::string str() const;
 
     friend double  compute_distance(const point2d& p1, const point2d& p2);
 	friend point2d compute_middle_point(const point2d p1, const point2d p2);
