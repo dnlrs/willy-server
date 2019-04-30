@@ -16,7 +16,7 @@ ip_addr::ip_addr(
 }
 
 ip_addr 
-ip_addr::hton()
+ip_addr::hton() const
 {
     if (is_hbo == false)
         return ip_addr(*this);
@@ -25,7 +25,7 @@ ip_addr::hton()
 }
 
 ip_addr 
-ip_addr::ntoh()
+ip_addr::ntoh() const
 {
     if (is_hbo == true)
         return ip_addr(*this);
@@ -33,10 +33,10 @@ ip_addr::ntoh()
 }
 
 std::string 
-ip_addr::str()
+ip_addr::str() const
 {
     if (is_hbo == false)
-        return ntoh().str();
+        return ip_addr(*this).ntoh().str();
 
     char str[INET_ADDRSTRLEN + 1]; // 192.168.255.255[:port]
     memset(&str[0], 0, INET_ADDRSTRLEN + 1);

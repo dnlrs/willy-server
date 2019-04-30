@@ -54,9 +54,17 @@ uint8_t& mac_addr::operator[](int index)
     return addr[index];
 }
 
-bool mac_addr::is_valid() {
+bool mac_addr::is_valid() 
+{
     // TODO: this may be implemented better
     return (uint64() != 0);
+}
+
+void mac_addr::clear() 
+{
+    *((uint32_t*)&addr[0]) = 0;
+    *((uint16_t*)&addr[4]) = 0;
+    is_hbo = false;
 }
 
 mac_addr mac_addr::ntoh()
@@ -81,10 +89,10 @@ mac_addr mac_addr::hton()
 
     return rval;
 }
-std::string mac_addr::str()
+std::string mac_addr::str() const
 {
     if (is_hbo == false)
-        return ntoh().str();
+        return mac_addr(*this).ntoh().str();
 
     static const char* digits = "0123456789ABCDEF";
     char rval[18]; // xx:xx:xx:xx:xx:xx'\0'
