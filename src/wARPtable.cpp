@@ -20,21 +20,22 @@ wARPtable::~wARPtable()
         FreeMibTable(ip_table);
 }
 
-uint64_t 
-wARPtable::get_mac_from_ip(uint64_t ip_address)
+uint64_t
+wARPtable::get_mac_from_ip(uint32_t ip_addr)
 {
     uint64_t rval = 0;
     for (unsigned long i = 0; i < ip_table->NumEntries; i++) {
         PMIB_IPNET_ROW2 row = &(ip_table->Table[i]);
         
-        if (row->Address.Ipv4.sin_addr.s_addr == ip_address)
-            continue;
-
-        for (int j = 0; j < row->PhysicalAddressLength; j++)
-            ((uint8_t*) rval)[j] = row->PhysicalAddress[j];
-
-        return rval;
+        if (row->Address.Ipv4.sin_addr.s_addr == ip_addr) {
+            for (unsigned long j = 0; j < row->PhysicalAddressLength; j++)
+                ((uint8_t*) &rval)[j] = row->PhysicalAddress[j];
+            break;
+        }
     }   
-
-    throw net_exception("Anchor IP not found in ARP table");
+    
+    if (rval == 0)
+        throw net_exception("Anchor IP not found in ARP table");
+    
+    return rval;
 }

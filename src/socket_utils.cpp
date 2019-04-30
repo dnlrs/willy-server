@@ -165,5 +165,5 @@ read_n(
     if (attempts <= 0)
         throw sock_exception("read_n: socket/connection is dead", raw_socket);
 
-    return (pmsg - dst_buffer);
+    return (uint32_t) (pmsg - dst_buffer);
 }

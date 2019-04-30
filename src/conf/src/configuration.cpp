@@ -125,13 +125,13 @@ cfg::configuration::del_property(const std::string& name)
     return true;
 }
 
-size_t
+int
 cfg::configuration::get_anchors_number()
 {
     // lock configuration
     std::lock_guard<std::recursive_mutex> 
         guard(configuration_access);
-    return anchors.size();
+    return (int) anchors.size();
 }
 
 bool

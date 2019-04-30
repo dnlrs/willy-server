@@ -13,7 +13,7 @@ collector::collector(
         db_storage.open(true);
     }
     catch (db::db_exception& dbe) {
-        throw coll_exception("ctor failed because database failed");
+        throw coll_exception("ctor failed because database failed\n" + std::string(dbe.what()));
     }
 }
 

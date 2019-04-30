@@ -62,7 +62,7 @@ namespace cfg {
         bool get_anchor_position(
             const uint64_t mac, 
             std::pair<double,double>& rval);
-        size_t get_anchors_number();
+        int get_anchors_number();
 
     private:
         // load/save configuration from/to specified file

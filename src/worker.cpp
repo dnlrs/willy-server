@@ -89,7 +89,7 @@ worker::deserialize(sized_buffer buffer)
 
     // ssid
     std::string ssid;
-    for (uint32_t i = 0; i < ssid_length; i++) {
+    for (int32_t i = 0; i < ssid_length; i++) {
         ssid[i] = *pmsg_byte;
         pmsg_byte++;
     }
