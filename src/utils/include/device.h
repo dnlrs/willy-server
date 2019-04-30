@@ -7,6 +7,7 @@
 #include "point2d.h"
 #include <cstdint>
 #include <string>
+
 class device {
 
 public:

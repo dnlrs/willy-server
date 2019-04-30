@@ -29,7 +29,7 @@ collector::submit_packet(packet new_packet)
 
     std::string hash       = new_packet.hash;
     int32_t     rssi       = new_packet.rssi;
-    uint64_t    anchor_mac = new_packet.anchor_mac;
+    mac_addr    anchor_mac = new_packet.anchor_mac;
     
     rssi_readings[hash][anchor_mac] = rssi;
     timestamps[hash] = new_packet.timestamp;
@@ -54,7 +54,7 @@ collector::submit_packet(packet new_packet)
 device
 collector::process_readings(
     packet new_packet,
-    std::map<uint64_t, int32_t> readings)
+    std::map<mac_addr, int32_t> readings)
 {
     std::vector<std::pair<point2d, int>> measurements;
 
@@ -81,7 +81,7 @@ collector::process_readings(
         new_packet.device_mac, new_packet.timestamp, 
         device_position.x, device_position.y);
 
-    debuglog("new device localized:\n" + rval.to_string());
+    debuglog("new device localized:\n" + rval.str());
     return rval;
 }
 

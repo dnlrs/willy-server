@@ -45,7 +45,7 @@ private:
      * */
     device process_readings(
         packet new_packet, 
-        std::map<uint64_t, int32_t> readings);
+        std::map<mac_addr, int32_t> readings);
 
     /* Stores packet and device data into persistent storage */
     void store_data(
@@ -64,7 +64,7 @@ private:
     int anchors_number = 0;
 
     /* [packet hash -> [anchor mac -> rssi measurement] */
-    std::map<std::string, std::map<uint64_t, int32_t>> rssi_readings;
+    std::map<std::string, std::map<mac_addr, int32_t>> rssi_readings;
     /* [packet hash -> timestamp] */
     std::map<std::string, uint64_t> timestamps;
 
