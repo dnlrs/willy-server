@@ -1,20 +1,21 @@
-#ifndef NET_EXCEPTION_H_INCLUDED
-#define NET_EXCEPTION_H_INCLUDED
+#ifndef UTL_EXCEPTION_H_INCLUDED
+#define UTL_EXCEPTION_H_INCLUDED
 #pragma once
+
 
 #include "logger.h"
 #include <exception>
 #include <string>
 
-class net_exception :
+class utl_exception :
     public std::exception
 {
 public:
-    net_exception() : errmsg("NET_EXCEPTION: unknown") { 
+    utl_exception() : errmsg("UTILS_EXCEPTION: unknown") { 
         debuglog(errmsg); 
     }
 	
-    net_exception(std::string msg) : errmsg("NET_EXCEPTION: " + msg) {
+    utl_exception(std::string msg) : errmsg("UTILS_EXCEPTION: " + msg) {
         debuglog(errmsg); 
     }
 
@@ -24,6 +25,4 @@ private:
 };
 
 
-
-
-#endif // !NET_EXCEPTION_H_INCLUDED
+#endif // !UTL_EXCEPTION_H_INCLUDED

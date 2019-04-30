@@ -1,11 +1,11 @@
+#include "logger.h"
 #include "utils.h"
 #include <string>
 #include <vector>
 #include <algorithm>
+#include "winsock2.h"
 #include "ws2tcpip.h"
 #include <windows.h> // windef.h - do not include directly
-
-
 
 std::string timetos(struct tm time)
 {
@@ -47,82 +47,7 @@ uint64_t get_current_time()
 
 
 
-uint64_t mac_str2int(const std::string mac)
-{
-    if (!mac_is_valid(mac.c_str()))
-        return 0;
-
-    std::string local_mac(mac);
-    local_mac.erase(
-        remove(local_mac.begin(), local_mac.end(), ':'),
-        local_mac.end());
-
-    local_mac.erase(
-        remove(local_mac.begin(), local_mac.end(), '-'),
-        local_mac.end());
-
-    return strtoull(local_mac.c_str(), NULL, 16);
-}
-
-std::string mac_int2str(const uint64_t mac)
-{
-    static const char* digits = "0123456789ABCDEF";
-    uint64_t local_mac = mac;
-    char rval[18]; // xx:xx:xx:xx:xx:xx'\0'
-
-    int pos = 17;
-    for (int byte = 5; byte >= 0; byte--) {
-        rval[pos--] = ':';
-        rval[pos--] = digits[local_mac & 0x0f];
-        local_mac >>= 4;
-        rval[pos--] = digits[local_mac & 0x0f];
-        local_mac >>= 4;
-    }
-    rval[17] = '\0';
-
-    return std::string(rval);
-}
-
-int mac_is_valid(const char* mac)
-{
-    if (!mac)
-        return 0;
-
-    int i = 0;
-    int s = 0;
-
-    while (*mac) {
-        if (isxdigit(*mac))
-            i++;
-        else if (*mac == ':' || *mac == '-') {
-            if (i == 0 || i / 2 - 1 != s)
-                break;
-            ++s;
-        }
-        else
-            s = -1;
-        ++mac;
-    }
-    return (i == 12 && (s == 5 || s == 0));
-}
-
 constexpr size_t af_inet_address_size = 16;
-
-std::string ip_int2str(const uint64_t ip)
-{
-    char str[INET_ADDRSTRLEN+1]; // 192.168.255.255[:port]
-    memset(&str[0], 0, INET_ADDRSTRLEN+1);
-
-    uint64_t lip = ip;
-
-    int rc = inet_pton(AF_INET, &str[0], &lip);
-    if (rc != 1)
-        return std::string("");
-
-    str[INET_ADDRSTRLEN - 1];
-    return std::string(str);
-}
-
 
 int
 str_is_valid_int(const char* str)
@@ -154,7 +79,6 @@ str_is_valid_double(const char* str)
 
     return (v == 1);
 }
-
 
 std::string
 wsa_etos(int error)

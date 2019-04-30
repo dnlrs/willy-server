@@ -13,17 +13,27 @@
   <ItemGroup>
     <ClInclude Include="include\anchor.h" />
     <ClInclude Include="include\device.h" />
+    <ClInclude Include="include\ip_addr.h" />
+    <ClInclude Include="include\mac_addr.h" />
     <ClInclude Include="include\packet.h" />
     <ClInclude Include="include\point2d.h" />
     <ClInclude Include="include\utils.h" />
+    <ClInclude Include="include\utl_exception.h" />
     <ClInclude Include="include\wwsadata.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\ip_addr.cpp" />
+    <ClCompile Include="src\mac_addr.cpp" />
     <ClCompile Include="src\point2d.cpp" />
     <ClCompile Include="src\utils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="README.md" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\log\log.vcxproj">
+      <Project>{3b6ce533-210e-43e4-a884-a6826c8dacbe}</Project>
+    </ProjectReference>
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
@@ -66,7 +76,6 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -79,7 +88,6 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
