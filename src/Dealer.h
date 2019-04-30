@@ -5,6 +5,7 @@
 #include "anchor.h"
 #include "cfg.h"
 #include "packet.h"
+#include "mac_addr.h"
 #include "net_exception.h"
 #include "receiver.h"
 #include "wwsadata.h"
@@ -22,7 +23,7 @@
 /* port used for the connection with the receivers */
 #define SERVICE_PORT 27015 
 
-constexpr long int dealer_waiting_time_ms     = 20;
+constexpr long int dealer_waiting_time_ms     = 200;
 constexpr int      dealer_max_accept_attempts = 10;
 
 /*
@@ -54,7 +55,7 @@ public:
     /* Asks the receiver to finish and rejoins the dealer thread */
     void finish();
 
-    uint64_t get_anchor_mac(SOCKET in_socket);
+    mac_addr get_anchor_mac(SOCKET in_socket);
     
     std::vector<SOCKET> get_opened_sockets();
     
@@ -106,7 +107,7 @@ private:
      * go wrong throws net_exception.
      * */
     void remove_connected_anchor(
-        const uint64_t anchor_mac);
+        const mac_addr anchor_mac);
 
     /* Brings the dealer object to a clean, new state
      *
@@ -127,9 +128,9 @@ private:
 	SOCKET listening_socket = INVALID_SOCKET;
 
     std::mutex anchors_rmtx;
-    std::map<uint64_t, anchor> anchors;        // {mac, anchor}
-    std::map<uint64_t, SOCKET> mac_to_socket;  // {mac, socket}
-    std::map<SOCKET, uint64_t> socket_to_mac;  // {socket, mac}
+    std::map<mac_addr, anchor> anchors;        // {mac, anchor}
+    std::map<mac_addr, SOCKET> mac_to_socket;  // {mac, socket}
+    std::map<SOCKET, mac_addr> socket_to_mac;  // {socket, mac}
 
     /* when this variable is > 0 the receiver thread will not save
      * into persistent storage the received packets while the dealer

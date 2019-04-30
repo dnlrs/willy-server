@@ -60,6 +60,7 @@ void dealer::stop()
         preceiver->stop();
 
     stop_working = true;
+    debuglog("dealer::stop: sent stop request");
 }
 
 void dealer::finish()
@@ -72,6 +73,7 @@ void dealer::finish()
 
     preceiver    = nullptr;
     dead_anchors = nullptr;
+    debuglog("dealer::finish: receiver thread joined");
 }
 
 void dealer::clear_state()
@@ -127,10 +129,10 @@ dealer::service()
                 add_connected_anchor(new_socket, new_anchor);
 
                 dead_anchors->fetch_sub(1);
-                debuglog("New anchor connected: ", new_anchor.to_string());
+                debuglog("New anchor connected: ", new_anchor.str());
             }
             else {
-                debuglog("Anchor " + mac_int2str(new_anchor.get_mac()) +
+                debuglog("Anchor " + new_anchor.get_mac().str() +
                     " was not found in configuration file");
                 close_connection(&new_socket);
             }
@@ -190,7 +192,7 @@ dealer::add_connected_anchor(
         throw net_exception(
             "Cannot add a new connected anchor with invalid socket");
     
-    uint64_t anchor_mac = new_anchor.get_mac();
+    mac_addr anchor_mac = new_anchor.get_mac();
     
     if (anchors.find(anchor_mac) != anchors.end()) {
         debuglog("Newly connected anchor was connected previously");
@@ -204,7 +206,7 @@ dealer::add_connected_anchor(
 
 void
 dealer::remove_connected_anchor(
-    const uint64_t anchor_mac)
+    const mac_addr anchor_mac)
 {
     SOCKET old_socket = mac_to_socket[anchor_mac];
     
@@ -267,7 +269,8 @@ dealer::connect_anchor(SOCKET* rsocket)
 
     // get anchor mac
     wARPtable arp_table;
-    uint64_t new_mac = arp_table.get_mac_from_ip(anchor_sa.sin_addr.s_addr);
+    ip_addr  new_ip(anchor_sa.sin_addr.s_addr);
+    mac_addr new_mac = arp_table.get_mac_from_ip(new_ip);
 
     set_keepalive_option(new_socket);
     set_non_blocking_socket(new_socket);
@@ -276,7 +279,7 @@ dealer::connect_anchor(SOCKET* rsocket)
 
     // return new socket and new anchor
     *rsocket = new_socket;
-    return anchor(new_mac, anchor_sa.sin_addr.s_addr);
+    return anchor(new_mac, new_ip);
 }
 
 
@@ -286,7 +289,7 @@ void dealer::close_all_connections()
 
     for (auto open_connection : socket_to_mac) {
         SOCKET   open_socket = open_connection.first;
-        uint64_t anchor_mac  = open_connection.second;
+        mac_addr anchor_mac  = open_connection.second;
 
         close_connection(&open_socket);
         remove_connected_anchor(anchor_mac);
@@ -318,7 +321,7 @@ dealer::send_connection_ack(const SOCKET anchor_socket)
     }
 }
 
-uint64_t
+mac_addr
 dealer::get_anchor_mac(SOCKET in_socket)
 {
     std::lock_guard<std::mutex> guard(anchors_rmtx);
@@ -342,6 +345,7 @@ dealer::get_opened_sockets()
 void
 dealer::notify_anchor_disconnected(SOCKET dead_socket)
 {
+    (void*)dead_socket;
     dead_anchors->fetch_add(1);
     dealer_cv.notify_all();
 }
