@@ -2,14 +2,12 @@
 #define PACKET_H_INCLUDED
 #pragma once
 
+#include "ip_addr.h"
+#include "mac_addr.h"
 #include "utils.h"
 #include <cstdint> /* for uint64_t */
 #include <sstream>
 #include <winsock2.h>
-
-#define MAC_LENGTH 6
-#define MD5_HASH_LENGTH 32
-#define MAX_SSID_LENGTH 32
 
 class packet {
 
@@ -21,8 +19,8 @@ public:
         uint32_t in_sequence_ctrl = 0, 
         uint32_t in_ssid_length = 0,
         uint64_t in_timestamp = 0,
-        uint64_t in_device_mac = 0,
-        uint64_t in_anchor_mac = 0,
+        mac_addr in_device_mac = mac_addr(),
+        mac_addr in_anchor_mac = mac_addr(),
         std::string in_ssid = "",
         std::string in_hash = "") :
             channel(in_channel),
@@ -35,12 +33,12 @@ public:
             ssid(in_ssid),
             hash(in_hash) {}
 
-    std::string to_string() 
+    std::string str() 
     {
         return std::string(
-            "device mac: "     + mac_int2str(device_mac) +
+            "device mac: "     + device_mac.str() +
             " rssi: "          + std::to_string(rssi) +
-            (anchor_mac != 0 ? ("anchor mac: " + mac_int2str(anchor_mac)) : "") +
+            (anchor_mac.is_valid() ? ("anchor mac: " + anchor_mac.str()) : "") +
             (ssid_length > 0 ? (" ssid: " + ssid) : "ssid: none") +
             " channel: "       + std::to_string(channel) +
             " sequence_ctrl: " + std::to_string(sequence_ctrl) +
@@ -53,8 +51,8 @@ public:
     uint32_t ssid_length;
     uint64_t timestamp;
     
-    uint64_t device_mac;
-    uint64_t anchor_mac = 0; // placeholder
+    mac_addr device_mac;
+    mac_addr anchor_mac; // placeholder
 
     std::string ssid;
     std::string hash;

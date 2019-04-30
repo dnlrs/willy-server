@@ -13,11 +13,12 @@ class anchor
 {
 public:
 
-    anchor() :
-        mac(), ip(), position() {}
-
-    anchor(mac_addr mac, ip_addr ip, double x = 0.0, double y = 0.0) :
-        mac(mac), ip(ip), position(x, y) {}
+    anchor(
+        mac_addr mac = mac_addr(), 
+        ip_addr  ip  = ip_addr(), 
+        double x = 0.0, 
+        double y = 0.0) :
+            mac(mac), ip(ip), position(x, y) {}
 
     anchor(mac_addr mac, ip_addr ip, point2d pos) :
         mac(mac), ip(ip), position(pos) {}
