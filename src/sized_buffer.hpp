@@ -1,6 +1,7 @@
 #ifndef SIZED_BUFFER_HPP_INCLUDED
 #define SIZED_BUFFER_HPP_INCLUDED
 
+#include "mac_addr.h"
 #include <cstdint>
 #include <vector>
 
@@ -11,7 +12,7 @@ public:
     
     std::vector<uint8_t> msg;
     uint32_t msg_size;
-    uint64_t anchor_mac;
+    mac_addr anchor_mac;
 };
 
 
