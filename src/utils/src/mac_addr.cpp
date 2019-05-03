@@ -31,22 +31,22 @@ mac_addr::mac_addr(const mac_addr& other)
 }
 
 bool mac_addr::operator==(const mac_addr& other) const {
-    return uint64() == other.uint64();
+    return get() == other.get();
 }
 bool mac_addr::operator==(const std::string str_mac) const {
     return *this == mac_addr(str_mac);
 }
 bool mac_addr::operator==(uint64_t uint64_mac) const {
-    return uint64() == uint64_mac;
+    return get() == uint64_mac;
 }
 bool mac_addr::operator<(const mac_addr& other) const {
-    return uint64() < other.uint64();
+    return get() < other.get();
 }
 bool mac_addr::operator<(const std::string str_mac) const {
     return *this < mac_addr(str_mac);
 }
 bool mac_addr::operator<(uint64_t uint64_mac) const {
-    return uint64() < uint64_mac;
+    return get() < uint64_mac;
 }
 
 mac_addr& mac_addr::operator=(const std::string& str_mac)
@@ -88,9 +88,9 @@ uint8_t& mac_addr::operator[](int index)
     return addr[index];
 }
 
-bool mac_addr::is_valid()
+bool mac_addr::is_valid() const
 {
-    return (uint64() != 0);
+    return (get() != 0);
 }
 
 void mac_addr::clear()
@@ -131,7 +131,7 @@ std::string mac_addr::str() const
     return std::string(rval);
 }
 
-uint64_t mac_addr::uint64() const
+uint64_t mac_addr::get() const
 /*
  * 0x0000aabbccddeeff
  *

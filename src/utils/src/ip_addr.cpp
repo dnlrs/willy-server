@@ -1,9 +1,7 @@
 #include "ip_addr.h"
 
 ip_addr::ip_addr(
-    std::string str_ip, 
-    bool is_host_byte_order = true) :
-        is_hbo(is_host_byte_order)
+    const std::string str_ip)
 {
     int rc = inet_pton(AF_INET, str_ip.c_str(), &addr);
 
@@ -15,29 +13,15 @@ ip_addr::ip_addr(
             "ip_addr ctor: ctor failed\n" + wsa_etos(WSAGetLastError()));
 }
 
-ip_addr 
-ip_addr::hton() const
+ip_addr& ip_addr::operator=(const uint32_t ip_addr)
 {
-    if (is_hbo == false)
-        return ip_addr(*this);
-
-    return ip_addr(::htonl(addr), false);
+    addr = ip_addr;
+    return *this;
 }
 
-ip_addr 
-ip_addr::ntoh() const
-{
-    if (is_hbo == true)
-        return ip_addr(*this);
-    return ip_addr(::ntohl(addr), true);
-}
-
-std::string 
+std::string
 ip_addr::str() const
 {
-    if (is_hbo == false)
-        return ip_addr(*this).ntoh().str();
-
     char str[INET_ADDRSTRLEN + 1]; // 192.168.255.255[:port]
     memset(&str[0], 0, INET_ADDRSTRLEN + 1);
 

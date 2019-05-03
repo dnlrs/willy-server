@@ -44,11 +44,11 @@ public:
     bool operator<(uint64_t uint64_mac) const;
     bool operator<(const std::string str_mac) const;
 
-    bool is_valid();
+    bool is_valid() const;
     void clear();
 
     std::string str() const; // conversion to string
-    uint64_t uint64() const; // convertion to unsigned long long
+    uint64_t    get() const; // convertion to unsigned long long
 
 public:
     static const int mac_length = 6;
