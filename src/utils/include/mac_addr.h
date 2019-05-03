@@ -7,52 +7,60 @@
 #include <cstdint>
 #include <string>
 
-constexpr int mac_length = 6;
-
-/* MAC address wrapper */
+/* MAC address wrapper
+ *
+ * The MAC addres is stored in canonical form (network byte order).
+ * And network byte order = big endian.
+ *
+ * note sul byte order:
+ *
+ * string: aa:bb:cc:dd:ee:ff
+ * int:    0x0000aabbccddeeff
+ *
+ * big endian (network byte order):
+ *     |00|00|aa|bb|cc|dd|ee|ff|
+ *      -  -  0  1  2  3  4  5
+ *
+ * little endian (host byte order):
+ *     |ff|ee|dd|cc|bb|aa|00|00|
+ *      0  1  2  3  4  5  -  -
+ * */
 class mac_addr {
-
 public:
     mac_addr();
-    mac_addr(uint8_t* addr_in, bool is_host_byte_order = false);
-    mac_addr(std::string str_mac, bool is_host_byte_order = true);
+    mac_addr(const std::string str_mac);
     mac_addr(const mac_addr& other); // copy ctor
 
-    mac_addr operator=(std::string str_mac) { return mac_addr(str_mac); }
+    mac_addr& operator=(const std::string& str_mac);
+    mac_addr& operator=(uint64_t int_mac);
+
     uint8_t& operator[](int index);
 
-    bool operator==(uint64_t uint64_mac) const  { return uint64() == uint64_mac;     }
-    bool operator==(const mac_addr& other) const      { return uint64() == other.uint64(); }
-    bool operator==(std::string str_mac) const  { return uint64() == mac_addr(str_mac).uint64(); }
-    bool operator<(uint64_t uint64_mac) const   { return uint64() < uint64_mac;      }
-    bool operator<(const mac_addr& other) const       { return uint64() < other.uint64();  }
-    bool operator<(std::string str_mac) const   { return uint64() < mac_addr(str_mac).uint64(); }
-
-    void set_host_byte_order()    { is_hbo = true; }
-    void set_network_byte_order() { is_hbo = false; };
+    // all comparisons are done in canonical form
+    bool operator==(const mac_addr& other) const;
+    bool operator==(uint64_t uint64_mac) const;
+    bool operator==(const std::string str_mac) const;
+    bool operator<(const mac_addr& other) const;
+    bool operator<(uint64_t uint64_mac) const;
+    bool operator<(const std::string str_mac) const;
 
     bool is_valid();
     void clear();
 
-    mac_addr ntoh();
-    mac_addr hton();
+    std::string str() const; // conversion to string
+    uint64_t uint64() const; // convertion to unsigned long long
 
-    std::string str() const;
-    uint64_t    uint64() const;
+public:
+    static const int mac_length = 6;
 
 private:
+    void parse_mac_string(std::string mac_str);
+    int  is_valid_mac_string(const char* mac);
 
-    void change_byte_order();
-
-    /* Checks if a mac in string format is valid */
-    int mac_is_valid(const char* mac);
-
-    static uint8_t hex_to_uint8(char hex_char);
+    static uint8_t convert_hex_to_int(char hex_char);
 
 private:
     uint8_t addr[mac_length];
-    bool is_hbo; // is Host Byte Order?
-
 };
 
 #endif // !MAC_ADDR_H_INCLUDED
