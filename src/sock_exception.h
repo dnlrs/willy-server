@@ -8,36 +8,42 @@
 #include <string>
 #include <WinSock2.h>
 
-class sock_exception : 
-    public net_exception
+#define SOCKE "SOCK_EXCEPTION: "
+
+/*
+ * This is an exception regardin sockets, invalid sockets, 
+ * recv / write failures that indicate dead connections.
+ * Usually it's not a fatal error, but it may be.
+ */
+class sock_exception
 {
 public:
-	sock_exception() : 
-			errmsg("SOCK_EXCEPTION: unknown") {
-		debuglog(errmsg);
-	}
+    sock_exception() :
+        errmsg(SOCKE "unknown") {
+        debuglog(errmsg);
+    }
 
-	sock_exception(const std::string& msg, SOCKET in_sock) : 
-			errmsg("SOCK_EXCEPTION: " + msg),
-            sock(in_sock) {
-		debuglog(errmsg);
-	}
-	
-	sock_exception(const std::string& msg, int wsa_error, SOCKET in_sock) :
-			errmsg("SOCK_EXCEPTION: " + msg + wsa_etos(wsa_error)),
-			errcode(wsa_error),
-            sock(in_sock) {
-		debuglog(errmsg);
-	}
+    sock_exception(const std::string& msg, SOCKET in_sock) :
+        errmsg(SOCKE + msg),
+        sock(in_sock) {
+        debuglog(errmsg);
+    }
 
-	virtual const char* what() const noexcept { return errmsg.c_str(); }
+    sock_exception(const std::string& msg, int wsa_error, SOCKET in_sock) :
+        errmsg(SOCKE + msg + wsa_etos(wsa_error)),
+        errcode(wsa_error),
+        sock(in_sock) {
+        debuglog(errmsg);
+    }
 
-	int geterr() { return this->errcode; }
+    virtual const char* what() const noexcept { return errmsg.c_str(); }
+
+    int geterr() { return this->errcode; }
     SOCKET get_socket() { return sock; }
 
 private:
-	string errmsg;
-	int errcode = 0;
+    std::string errmsg;
+    int errcode = 0;
     SOCKET sock = INVALID_SOCKET;
 };
 

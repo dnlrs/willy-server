@@ -6,25 +6,27 @@
 #include "net_exception.h"
 #include <string>
 
-// this exception it is raised when the connection is closed by the peer
-class recv_exception : 
-    public net_exception
+#define RECVE "RECV_EXCEPTION: "
+
+/* Currently not used.
+ * This exception is raised when the connection is closed
+ * by the peer
+ */
+class recv_exception
 {
 public:
-	recv_exception() : 
-			errmsg("RECV_EXCEPTION: unknown") {
-		debuglog(errmsg);
-	}
+    recv_exception() : errmsg(RECVE "unknown") {
+        debuglog(errmsg);
+    }
 
-	recv_exception(const std::string& msg) : 
-			errmsg("RECV_EXCEPTION: " + msg) {
-		debuglog(errmsg);
-	}
+    recv_exception(const std::string& msg) : errmsg(RECVE + msg) {
+        debuglog(errmsg);
+    }
 
-	virtual const char* what() const noexcept { return errmsg.c_str(); }
+    virtual const char* what() const noexcept { return errmsg.c_str(); }
 
 private:
-	string errmsg;
+    std::string errmsg;
 };
 
 #endif // !RECV_EXCEPTION_H_INCLUDED
