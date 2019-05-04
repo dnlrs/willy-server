@@ -1,26 +1,27 @@
+#include "tests.h"
 #include "dealer.h"
+#include "ip_addr.h"
+#include "logger.h"
+#include "mac_addr.h"
+#include "winsock2.h"
+#include <cassert>
+#include <cstdlib>
+#include <string>
 #include <utility>
-
-// Link with all the need libs (this works only for the msvc compiler)
-
-
-//std::string conf_folder("config/");
 
 int main()
 {
+    test_mac_addr();
+    test_ip_addr();
+
     std::string configuration_file("config/server.conf");
     dealer dealer;
 
     // initialize configuration
     dealer.init(configuration_file);
-
     dealer.start();
 
-    int i = 20;
-    while (i-- > 0) {
-        std::this_thread::sleep_for(std::chrono::seconds(5));
-    }
+    std::system("pause");
 
     return 0;
 }
-
