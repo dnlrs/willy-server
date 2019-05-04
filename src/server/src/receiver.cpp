@@ -2,7 +2,7 @@
 #include "net_exception.h"
 #include "receiver.h"
 #include "recv_exception.h"
-#include "sized_buffer.hpp"
+#include "sized_buffer.h"
 #include "socket_utils.h"
 #include "sock_exception.h"
 #include "utils.h"

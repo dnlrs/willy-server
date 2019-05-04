@@ -13,6 +13,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "utils", "src\utils\utils.vc
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "conf", "src\conf\conf.vcxproj", "{93CD3A4B-F7F5-4FEA-8FBE-5908ECC84462}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "server", "src\server\server.vcxproj", "{5DBAB47F-2C1C-4849-B22F-5D8EDB2416FB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -51,6 +53,12 @@ Global
 		{93CD3A4B-F7F5-4FEA-8FBE-5908ECC84462}.Release|x64.ActiveCfg = Release|x64
 		{93CD3A4B-F7F5-4FEA-8FBE-5908ECC84462}.Release|x64.Build.0 = Release|x64
 		{93CD3A4B-F7F5-4FEA-8FBE-5908ECC84462}.Release|x86.ActiveCfg = Release|x64
+		{5DBAB47F-2C1C-4849-B22F-5D8EDB2416FB}.Debug|x64.ActiveCfg = Debug|x64
+		{5DBAB47F-2C1C-4849-B22F-5D8EDB2416FB}.Debug|x64.Build.0 = Debug|x64
+		{5DBAB47F-2C1C-4849-B22F-5D8EDB2416FB}.Debug|x86.ActiveCfg = Debug|x64
+		{5DBAB47F-2C1C-4849-B22F-5D8EDB2416FB}.Release|x64.ActiveCfg = Release|x64
+		{5DBAB47F-2C1C-4849-B22F-5D8EDB2416FB}.Release|x64.Build.0 = Release|x64
+		{5DBAB47F-2C1C-4849-B22F-5D8EDB2416FB}.Release|x86.ActiveCfg = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

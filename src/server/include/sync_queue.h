@@ -3,7 +3,7 @@
 #pragma once
 
 #include "logger.h"
-#include "sized_buffer.hpp"
+#include "sized_buffer.h"
 #include <atomic>
 #include <condition_variable>
 #include <memory>
