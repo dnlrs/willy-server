@@ -68,7 +68,7 @@ private:
     std::map<std::string, std::map<mac_addr, int32_t>> rssi_readings;
 
     /* [packet hash -> timestamp] */
-    std::map<std::string, uint64_t> timestamps;
+    std::map<std::string, uint64_t> timestamps; 
 
     /* system wide configuration */
     std::shared_ptr<cfg::configuration> context = nullptr;

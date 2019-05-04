@@ -38,8 +38,9 @@ public:
         return std::string(
             "device mac: " + device_mac.str() +
             " rssi: "      + std::to_string(rssi) +
+            " timestamp: " + std::to_string(timestamp) +
             (anchor_mac.is_valid() ? ("anchor mac: " + anchor_mac.str()) : "") +
-            ((ssid_length > 0) ? (" ssid: " + ssid) : " ssid: none") +
+            ((ssid_length > 0)     ? (" ssid: " + ssid) : "") +
             " channel: "       + std::to_string(channel) +
             " sequence_ctrl: " + std::to_string(sequence_ctrl) +
             " hash: "          + hash);

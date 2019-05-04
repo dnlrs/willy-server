@@ -41,7 +41,9 @@ uint64_t get_current_time()
 {
     std::time_t current_time = std::time(nullptr);
 
-    /* this may break since time_t type is not specified */
+    /* this may break since time_t type is not standard-specified, 
+     * yet it is implemented as uint64_t in windows 
+     */
     return (uint64_t)current_time;
 }
 

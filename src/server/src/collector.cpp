@@ -45,7 +45,7 @@ collector::submit_packet(packet new_packet)
         guard.lock();
     }
 
-    if (rssi_readings.size() > default_max_container_size)
+    if (timestamps.size() > default_max_container_size)
         clean_container();
 }
 
@@ -81,7 +81,7 @@ collector::process_readings(
         new_packet.device_mac, new_packet.timestamp,
         device_position.x, device_position.y);
 
-    debuglog("localized: " + rval.str());
+    debuglog("localized:", rval.str());
 
     return rval;
 #else
@@ -96,6 +96,7 @@ collector::store_data(
     packet new_packet,
     device new_device)
 {
+    return;
     try {
         db_storage.add_packet(new_packet, new_packet.anchor_mac);
         db_storage.add_device(new_device);
@@ -110,15 +111,18 @@ collector::store_data(
 void
 collector::clean_container()
 {
+    debuglog("collector::clean_container: cleaning...");
     uint64_t current_time = get_current_time();
 
-    for (auto reading : rssi_readings) {
-        std::string hash      = reading.first;
-        uint64_t    hash_time = timestamps[reading.first];
-
-        if (hash_time - current_time > default_max_timestamp_diff) {
-            timestamps.erase(hash);
-            rssi_readings.erase(hash);
+    std::vector<std::string> old_hashes;
+    for (auto timestamp : timestamps) {
+        if ((current_time - timestamp.second) >= default_max_timestamp_diff) {
+            old_hashes.push_back(timestamp.first);
         }
+    }
+
+    for (auto hash : old_hashes) {
+        timestamps.erase(hash);
+        rssi_readings.erase(hash);
     }
 }
