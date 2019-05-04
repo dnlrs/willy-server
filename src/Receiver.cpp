@@ -9,7 +9,6 @@
 #include <chrono>
 #include <thread>
 
-
 receiver::receiver(
     dealer& dealer_ref,
     std::shared_ptr<cfg::configuration> context_in,
@@ -17,7 +16,7 @@ receiver::receiver(
         broker(dealer_ref),
         context(context_in),
         dead_anchors(dead_anchors_in)
-{   
+{
     stop_working = false;
     raw_packets_queue = nullptr;
     packet_collector  = nullptr;
@@ -25,30 +24,33 @@ receiver::receiver(
 
 receiver::~receiver()
 {
-    clear_state();
+    if (raw_packets_queue != nullptr)
+        shutdown_receiver();
 }
 
 void receiver::start()
 {
-    /* this assures a clean start state */
-    clear_state();
+    // this assures a clean start
+    if (raw_packets_queue != nullptr)
+        shutdown_receiver();
 
     raw_packets_queue = std::make_shared<sync_queue>();
     packet_collector  = std::make_shared<collector>(context);
 
     int workers_nr = get_workers_number();
-
-    debuglog("deploying " + std::to_string(workers_nr) + " workers\n");
+    debuglog("receiver::start: "
+        "deploying " + std::to_string(workers_nr) + " workers\n");
     for (int i = 0; i < workers_nr; i++) {
-        std::shared_ptr<worker> new_worker = 
+        std::shared_ptr<worker> new_worker =
             std::make_shared<worker>(
                 context, raw_packets_queue, packet_collector);
         new_worker->start();
         workers.push_back(new_worker);
     }
-    
+
     stop_working    = false;
     receiver_thread = std::thread(&receiver::service, this);
+    debuglog("receiver::start: receiver thread started... OK");
 }
 
 void receiver::stop()
@@ -57,10 +59,11 @@ void receiver::stop()
 
     for (std::shared_ptr<worker> employee : workers)
         employee->stop();
+    debuglog("receiver::start: sending stop requst... OK");
 }
 
 void receiver::finish()
-{   
+{
     for (std::shared_ptr<worker> employee : workers)
         employee->finish();
     workers.clear();
@@ -70,9 +73,10 @@ void receiver::finish()
 
     raw_packets_queue = nullptr;
     packet_collector  = nullptr;
+    debuglog("receiver::finish: stopping receiver thread... OK");
 }
 
-void receiver::clear_state()
+void receiver::shutdown_receiver()
 {
     stop();
     finish();
@@ -81,16 +85,17 @@ void receiver::clear_state()
 void
 receiver::service()
 {
+    debuglog("receiver thread:", std::this_thread::get_id());
     std::vector<SOCKET> active_sockets;
-    
+
     // select timeout structure
     struct timeval tm;
-    tm.tv_sec  = select_timeout_sec;
-    tm.tv_usec = select_timeout_usec;
-    
+    tm.tv_sec  = receiver_select_timeout_sec;
+    tm.tv_usec = receiver_select_timeout_usec;
+
     // select returned ready sockets
-    int n = 0;
-    
+    int ready_sockets_nr = 0;
+
     fd_set active_rset;
 
     while (stop_working == false) {
@@ -98,35 +103,33 @@ receiver::service()
 
         if (active_sockets.size() == 0) {
             std::this_thread::sleep_for(
-                std::chrono::milliseconds(default_sleep_ms));
+                std::chrono::milliseconds(receiver_sleeping_time_ms));
             continue; // no opened sockets exists
         }
-    
+
         FD_ZERO(&active_rset);
 
         for (SOCKET sock : active_sockets)
             FD_SET(sock, &active_rset);
 
-        n = ::select(FD_SETSIZE, &active_rset, NULL, NULL, &tm);
-            
-        if (n == 0) {
+        ready_sockets_nr =
+            ::select(FD_SETSIZE, &active_rset, NULL, NULL, &tm);
+
+        if (ready_sockets_nr == 0) {
             // select timeout expired
-            continue; 
+            continue;
         }
 
-        if (n == SOCKET_ERROR) {
-            /* select failed: this is a fatal error and under 
-             * normal conditions should not happen
-             **/
-            debuglog("receiver: select failed\n" + wsa_etos(WSAGetLastError()));
+        if (ready_sockets_nr == SOCKET_ERROR) {
+            // select failed, should not happen under normal conditions
+            debuglog("receiver::service: "
+                "select failed\n" + wsa_etos(WSAGetLastError()));
             broker.notify_fatal_error();
             stop_working = true;
             continue;
         }
 
-        /* read from each ready socket and store messages in the 
-         * shared fifo queue 
-         **/
+        // empty ready sockets' buffers
         try {
             for (SOCKET sock : active_sockets) {
                 if (FD_ISSET(sock, &active_rset)) {
@@ -139,9 +142,13 @@ receiver::service()
                     }
                 }
             }
-        } catch (sock_exception& sock_ex) {
+        }
+        catch (sock_exception& sock_ex) {
+            debuglog("receiver::service: got socket exception");
             broker.notify_anchor_disconnected(sock_ex.get_socket());
-        } catch (net_exception& net_ex) {
+        }
+        catch (net_exception& net_ex) {
+            debuglog("receiver::service: got network exception");
             broker.notify_fatal_error();
         }
     }
@@ -151,15 +158,14 @@ int
 receiver::get_workers_number()
 {
     int hw_concurrency = std::thread::hardware_concurrency();
- 
+
     if (hw_concurrency == 0)
-        return default_workers_number;
+        return receiver_min_workers_number;
 
     hw_concurrency -= 2;
 
-    if (hw_concurrency < default_workers_number)
-        return default_workers_number;
-
+    if (hw_concurrency < receiver_min_workers_number)
+        return receiver_min_workers_number;
 
     return hw_concurrency;
 }

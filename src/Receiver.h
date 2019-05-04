@@ -9,24 +9,23 @@
 #include <thread>
 #include <atomic>
 
-constexpr long int default_sleep_ms    = 10;
-constexpr long int select_timeout_sec  = 0;
-constexpr long int select_timeout_usec = 20000;
+constexpr long int receiver_sleeping_time_ms    = 200;
+constexpr long int receiver_select_timeout_sec  = 0;
+constexpr long int receiver_select_timeout_usec = 20000;
 
-constexpr int default_workers_number = 4;
+constexpr int receiver_min_workers_number = 4;
 
 // forward declaration
 class dealer;
 
 class receiver
 {
-
 public:
     receiver(
-        dealer& dealer_ref, 
+        dealer& dealer_ref,
         std::shared_ptr<cfg::configuration> context_in,
         std::shared_ptr<std::atomic_int>    dead_anchors_in);
-	
+
     ~receiver();
 
     /* Asks the workers to start and deploys the receiver thread */
@@ -47,24 +46,19 @@ private:
      */
     void service();
 
-    /* Brings the receiver object to a clean, new state
-     *
-     * Calls in order:
-     * - stop
-     * - finish
-     * */
-    void clear_state();
+    /* Calls stop() then finish() (blocking) */
+    void shutdown_receiver();
 
     /* Gets the hardware concurrency capability */
     int get_workers_number();
-    
+
 private:
     /* reference to dealer */
     dealer& broker;
-    
-    /* shared with the dealer, indicated the number of 
-     * anchors currently not connected 
-     * */
+
+    /* shared with the dealer, indicates the number of
+     * anchors currently not connected
+     */
     std::shared_ptr<std::atomic_int> dead_anchors = nullptr;
 
     /* thread controlling variables */
@@ -73,15 +67,18 @@ private:
     /* reference to the actual receiver thread */
     std::thread receiver_thread;
 
-    /* shared fifo queue between the receiver and the workers;
-     * concurrency is managed within the queue object 
-     * */
+    /* Shared fifo queue between the receiver and the workers;
+     * concurrency is managed within the queue object
+     *   Note that this is also the control variable to check
+     * if the receiver is running, so when the receiver is not
+     * running this shall be nullptr.
+     */
     std::shared_ptr<sync_queue> raw_packets_queue = nullptr;
 
-    /* shared deserialized-packets container;
-     * This container is shared only among workers, the receiver 
-     * may only create it and pass it around 
-     * */
+    /* Shared deserialized-packets container;
+     * This container is shared only among workers, the receiver
+     * may only create it and pass it around
+     */
     std::shared_ptr<collector> packet_collector = nullptr;
 
     /* threads that deserialize raw buffers into packets */
@@ -91,4 +88,4 @@ private:
     std::shared_ptr<cfg::configuration> context = nullptr;
 };
 
-#endif
+#endif // !RECEIVER_H_INCLUDED
