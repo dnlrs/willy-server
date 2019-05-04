@@ -9,6 +9,7 @@ dealer::dealer()
 {
     listening_socket = INVALID_SOCKET;
     stop_working = false;
+    connections  = nullptr;
     dead_anchors = nullptr;
     preceiver    = nullptr;
     context      = nullptr;
@@ -33,7 +34,8 @@ void dealer::init(std::string conf_file)
     // read configuration
     context->import_configuration(conf_file, true);
     if (context->get_anchors_number() == 0)
-        throw net_exception("No anchors found in configuration file");
+        throw net_exception("dealer::init: "
+            "no anchors found in configuration file");
     debuglog("dealer::init: importing configuration... OK");
 
     // avoid trying to open two listneing sockets
@@ -51,12 +53,17 @@ void dealer::start()
     if (preceiver != nullptr)
         shutdown();
 
+    // new connections storage
+    connections = std::make_shared<connection_set>();
+
+    // start receiver
     dead_anchors =
         std::make_shared<std::atomic_int>(context->get_anchors_number());
-
-    preceiver = std::make_unique<receiver>(*this, context, dead_anchors);
+    preceiver = 
+        std::make_unique<receiver>(*this, context, connections, dead_anchors);
     preceiver->start();
 
+    // start dealer's thread
     stop_working  = false;
     dealer_thread = std::thread(&dealer::service, this);
     debuglog("dealer::start: dealer thread started... OK");
@@ -82,7 +89,8 @@ void dealer::finish()
     preceiver    = nullptr;
     dead_anchors = nullptr;
 
-    close_all_connections();
+    connections->close_all_connections();
+    connections = nullptr;
     debuglog("dealer::finish: stopping dealer thread... OK");
 }
 
@@ -99,7 +107,7 @@ dealer::service()
     debuglog("dealer::service: "
         "waiting for ", dead_anchors->load(), " anchors to connect...");
 
-    std::unique_lock<std::mutex> guard(anchors_rmtx);
+    std::unique_lock<std::mutex> guard(dealer_mtx);
     while (stop_working == false) {
         if (
             dealer_cv.wait_for(
@@ -131,7 +139,7 @@ dealer::service()
                 // newly connected anchor found in configuration
                 new_anchor.set_position(new_anchor_position);
 
-                add_connected_anchor(new_socket, new_anchor);
+                connections->add_connected_anchor(new_socket, new_anchor);
 
                 dead_anchors->fetch_sub(1);
                 debuglog("dealer::service: "
@@ -208,58 +216,6 @@ dealer::connect_anchor(SOCKET* rsocket)
 }
 
 void
-dealer::add_connected_anchor(
-    const SOCKET new_socket,
-    const anchor new_anchor)
-{
-    if (new_socket == INVALID_SOCKET)
-        throw net_exception(
-            "Cannot add a new connected anchor with invalid socket");
-
-    mac_addr anchor_mac = new_anchor.get_mac();
-
-    if (anchors.find(anchor_mac) != anchors.end()) {
-        debuglog("Newly connected anchor was connected previously");
-        remove_connected_anchor(anchor_mac);
-    }
-
-    anchors[anchor_mac] = new_anchor;
-    mac_to_socket[anchor_mac] = new_socket;
-    socket_to_mac[new_socket] = anchor_mac;
-}
-
-void
-dealer::remove_connected_anchor(
-    const mac_addr anchor_mac)
-{
-    SOCKET old_socket = mac_to_socket[anchor_mac];
-
-    if (anchors.find(anchor_mac) != anchors.end())
-        anchors.erase(anchor_mac);
-
-    if (mac_to_socket.find(anchor_mac) != mac_to_socket.end())
-        mac_to_socket.erase(anchor_mac);
-
-    if (socket_to_mac.find(old_socket) != socket_to_mac.end())
-        socket_to_mac.erase(old_socket);
-
-    close_connection(&old_socket);
-}
-
-void dealer::close_all_connections()
-{
-    std::unique_lock<std::mutex> guard(anchors_rmtx);
-
-    for (auto open_connection : socket_to_mac) {
-        SOCKET   open_socket = open_connection.first;
-        mac_addr anchor_mac = open_connection.second;
-
-        close_connection(&open_socket);
-        remove_connected_anchor(anchor_mac);
-    }
-}
-
-void
 dealer::send_connection_ack(const SOCKET anchor_socket)
 {
     if (anchor_socket == INVALID_SOCKET)
@@ -282,39 +238,23 @@ dealer::send_connection_ack(const SOCKET anchor_socket)
     }
 }
 
-mac_addr
-dealer::get_anchor_mac(SOCKET in_socket)
-{
-    std::lock_guard<std::mutex> guard(anchors_rmtx);
-    // TODO: what if wrong socket in?
-    return socket_to_mac[in_socket];
-}
-
-std::vector<SOCKET>
-dealer::get_opened_sockets()
-{
-    std::vector<SOCKET> rval;
-
-    std::lock_guard<std::mutex> guard(anchors_rmtx);
-
-    for (auto soc_pair : socket_to_mac)
-        rval.push_back(soc_pair.first);
-
-    return rval;
-}
-
 void
 dealer::notify_anchor_disconnected(SOCKET dead_socket)
+/*
+ * Close the connection, remove anchor and wake up
+ * dealer's thread.
+ */
 {
-    mac_addr dead_anchor_mac = get_anchor_mac(dead_socket);
-    remove_connected_anchor(dead_anchor_mac);
-
+    connections->close_connection(dead_socket);
     dead_anchors->fetch_add(1);
     dealer_cv.notify_all();
 }
 
 void
 dealer::notify_fatal_error()
+/*
+ * Do NOT call shutdown(), otherwise deadlock!
+ */
 {
     debuglog("FATAL ERROR: fatal error notified, stopping dealer.\n");
     stop();

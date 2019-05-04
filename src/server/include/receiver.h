@@ -4,6 +4,7 @@
 
 #include "cfg.h"
 #include "collector.h"
+#include "connection_set.h"
 #include "sync_queue.h"
 #include "worker.h"
 #include <thread>
@@ -24,6 +25,7 @@ public:
     receiver(
         dealer& dealer_ref,
         std::shared_ptr<cfg::configuration> context_in,
+        std::shared_ptr<connection_set>     connections_in,
         std::shared_ptr<std::atomic_int>    dead_anchors_in);
 
     ~receiver();
@@ -55,6 +57,11 @@ private:
 private:
     /* reference to dealer */
     dealer& broker;
+
+    /* Data about connected anchors and connections 
+     * Only part of the information is accessible to the 
+     * receiver */
+    std::shared_ptr<connection_set> connections = nullptr;
 
     /* shared with the dealer, indicates the number of
      * anchors currently not connected

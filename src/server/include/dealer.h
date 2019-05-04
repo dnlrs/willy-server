@@ -4,6 +4,7 @@
 
 #include "anchor.h"
 #include "cfg.h"
+#include "connection_set.h"
 #include "packet.h"
 #include "mac_addr.h"
 #include "net_exception.h"
@@ -57,13 +58,13 @@ public:
      */
     void finish();
 
-    /* stop() then finish() (blocking) */
+    /* Calls stop() then finish() (blocking) */
     void shutdown();
 
-    mac_addr            get_anchor_mac(SOCKET in_socket);
-    std::vector<SOCKET> get_opened_sockets();
-
+    /* Closes the connection server side and removes it from active connections */
     void notify_anchor_disconnected(SOCKET dead_socket);
+
+    /* Stops the server *without joining threads* */
     void notify_fatal_error();
 
 private:
@@ -89,39 +90,13 @@ private:
     void send_connection_ack(
         const SOCKET anchor_socket);
 
-    /* Adds a new connected anchor
-     *
-     * If the new anchor had already a previous opened
-     * connection on another socket, that connection is
-     * is closed and removed and the new connection is
-     * saved
-     * */
-    void add_connected_anchor(
-        const SOCKET new_socket,
-        const anchor new_anchor);
-
-    /* Removes a previously connected anchor
-     *
-     * If the old socket is not invalid socket, then
-     * this function takes also care about shutting down
-     * and closing the socket. If any of these operations
-     * go wrong throws net_exception.
-     * */
-    void remove_connected_anchor(
-        const mac_addr anchor_mac);
-
-    /* Closes all opened connections (not the listening socket) */
-    void close_all_connections();
-
 private:
     wwsadata data;
 
     SOCKET listening_socket = INVALID_SOCKET;
 
-    std::mutex anchors_rmtx;
-    std::map<mac_addr, anchor> anchors;        // {mac, anchor}
-    std::map<mac_addr, SOCKET> mac_to_socket;  // {mac, socket}
-    std::map<SOCKET, mac_addr> socket_to_mac;  // {socket, mac}
+    /* Data about all connected anchors and connections */
+    std::shared_ptr<connection_set> connections = nullptr;
 
     /*
      * This is the number of lost connections or dead anchors.
@@ -140,7 +115,8 @@ private:
     std::unique_ptr<receiver> preceiver = nullptr;
 
     /* thread controlling variables (dealer's thread only) */
-    std::atomic_bool stop_working = false;
+    std::atomic_bool        stop_working = false;
+    std::mutex              dealer_mtx;
     std::condition_variable dealer_cv;
 
     /* reference to the actual dealer thread */

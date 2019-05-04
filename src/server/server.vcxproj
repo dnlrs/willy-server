@@ -13,6 +13,7 @@
   <ItemGroup>
     <ClInclude Include="include\collector.h" />
     <ClInclude Include="include\coll_exception.h" />
+    <ClInclude Include="include\connection_set.h" />
     <ClInclude Include="include\dealer.h" />
     <ClInclude Include="include\net_exception.h" />
     <ClInclude Include="include\receiver.h" />
@@ -26,6 +27,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\collector.cpp" />
+    <ClCompile Include="src\connection_set.cpp" />
     <ClCompile Include="src\dealer.cpp" />
     <ClCompile Include="src\receiver.cpp" />
     <ClCompile Include="src\socket_utils.cpp" />

@@ -12,9 +12,11 @@
 receiver::receiver(
     dealer& dealer_ref,
     std::shared_ptr<cfg::configuration> context_in,
+    std::shared_ptr<connection_set>     connections_in,
     std::shared_ptr<std::atomic_int>    dead_anchors_in) :
         broker(dealer_ref),
         context(context_in),
+        connections(connections_in),
         dead_anchors(dead_anchors_in)
 {
     stop_working = false;
@@ -99,7 +101,7 @@ receiver::service()
     fd_set active_rset;
 
     while (stop_working == false) {
-        active_sockets = broker.get_opened_sockets();
+        active_sockets = connections->get_open_sockets();
 
         if (active_sockets.size() == 0) {
             std::this_thread::sleep_for(
@@ -131,11 +133,11 @@ receiver::service()
 
         // empty ready sockets' buffers
         try {
-            for (SOCKET sock : active_sockets) {
-                if (FD_ISSET(sock, &active_rset)) {
+            for (SOCKET ready_socket : active_sockets) {
+                if (FD_ISSET(ready_socket, &active_rset)) {
                     sized_buffer buffer;
-                    buffer.msg_size   = read_sized_message(buffer.msg, sock);
-                    buffer.anchor_mac = broker.get_anchor_mac(sock);
+                    buffer.msg_size   = read_sized_message(buffer.msg, ready_socket);
+                    buffer.anchor_mac = connections->get_anchor_mac(ready_socket);
 
                     if (dead_anchors->load() == 0) {
                         raw_packets_queue->push(buffer);
