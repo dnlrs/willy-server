@@ -2,6 +2,7 @@
 #define CONFIGURATION_H_INCLUDED
 
 #include "conf_exception.h"
+#include "mac_addr.h"
 #include <string>
 #include <map>
 #include <mutex>
@@ -58,9 +59,9 @@ namespace cfg {
         bool del_property(const std::string& name);
         
         // properties regarding anchors
-        bool anchor_is_known(const uint64_t mac);
+        bool anchor_is_known(const mac_addr mac);
         bool get_anchor_position(
-            const uint64_t mac, 
+            const mac_addr mac, 
             std::pair<double,double>& rval);
         int get_anchors_number();
 
@@ -75,7 +76,7 @@ namespace cfg {
 
         std::recursive_mutex configuration_access;
         
-        std::map<uint64_t, std::pair<double, double>> anchors;
+        std::map<mac_addr, std::pair<double, double>> anchors;
         std::map<std::string, std::string>  properties;
 
     };

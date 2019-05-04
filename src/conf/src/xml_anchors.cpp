@@ -8,7 +8,7 @@
 #include <utility>
 #include <string>
 
-std::map<uint64_t, std::pair<double, double>> 
+std::map<mac_addr, std::pair<double, double>> 
 cfg::xml::xml_anchors::unmarshall(
     const rapidxml::xml_node<>* anchors_node)
 {
@@ -33,7 +33,7 @@ cfg::xml::xml_anchors::unmarshall(
     // for each anchor 
     // - read its mac
     // - read tts position
-    std::map<uint64_t, std::pair<double, double>> anchors;
+    std::map<mac_addr, std::pair<double, double>> anchors;
     for (rapidxml::xml_node<>* xn_anchor = anchors_node->first_node(XML_ANCHOR);
         xn_anchor;
         xn_anchor = xn_anchor->next_sibling())
@@ -42,13 +42,11 @@ cfg::xml::xml_anchors::unmarshall(
         rapidxml::xml_node<>* mac_node = xn_anchor->first_node(XML_ANCHOR_MAC);
         IF_NULL_THROW_INVALID_XML(mac_node, "'mac' element missing");
 
-        std::string mac = mac_node->value();
-        IF_NULL_THROW_INVALID_XML(
-            mac_is_valid(mac.c_str()), "'mac' value missing");
+        mac_addr mac(mac_node->value());
+        IF_NULL_THROW_INVALID_XML(mac.is_valid(), "'mac' value missing");
 
         // check for doubles (if 2 anchors have same MAC)
-        uint64_t id = mac_str2int(mac);
-        if (anchors.find(id) != anchors.end())
+        if (anchors.find(mac) != anchors.end())
             throw conf_exception(
                 "found two anchors with same mac", 
                 CONF_INVALID_XML);
@@ -80,7 +78,7 @@ cfg::xml::xml_anchors::unmarshall(
         double y = std::stod(coordinate_node->value());
 
         // save locally anchor
-        anchors[id] = std::make_pair(x, y);
+        anchors[mac] = std::make_pair(x, y);
     }
 
     if (anchors.size() != anchors_number)
@@ -92,7 +90,7 @@ cfg::xml::xml_anchors::unmarshall(
 rapidxml::xml_node<>*
 cfg::xml::xml_anchors::marshall(
     rapidxml::xml_document<>& doc,
-    std::map<uint64_t, std::pair<double, double>> anchors)
+    std::map<mac_addr, std::pair<double, double>> anchors)
 {
     rapidxml::xml_node<>* anchors_node;
 
@@ -112,7 +110,7 @@ cfg::xml::xml_anchors::marshall(
         {
             std::pair<double, double> position = entry.second;
             char* mac_value =
-                doc.allocate_string(mac_int2str(entry.first).c_str());
+                doc.allocate_string((entry.first).str().c_str());
             char* x_value =
                 doc.allocate_string(std::to_string(position.first).c_str());
             char* y_value =

@@ -15,12 +15,12 @@ namespace cfg
         public:
             void unmarshall(
                 const std::string in,
-                std::map<uint64_t, std::pair<double, double>>& anchors,
+                std::map<mac_addr, std::pair<double, double>>& anchors,
                 std::map<std::string, std::string>& properties);
 
             void marshall(
                 std::string& out,
-                const std::map<uint64_t, std::pair<double, double>>& anchors,
+                const std::map<mac_addr, std::pair<double, double>>& anchors,
                 const std::map<std::string, std::string>& properties);
         };
     }

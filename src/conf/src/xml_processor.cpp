@@ -1,3 +1,4 @@
+#include "mac_addr.h"
 #include "xml_processor.h"
 #include "xml_macros.h"
 #include "xml_anchors.h"
@@ -11,7 +12,7 @@
 void 
 cfg::xml::xml_processor::unmarshall(
     const std::string in,
-    std::map<uint64_t, std::pair<double, double>>& anchors,
+    std::map<mac_addr, std::pair<double, double>>& anchors,
     std::map<std::string, std::string>& properties)
 {
     std::vector<char> data(in.begin(), in.end());
@@ -40,7 +41,7 @@ cfg::xml::xml_processor::unmarshall(
 void 
 cfg::xml::xml_processor::marshall(
     std::string& out,
-    const std::map<uint64_t, std::pair<double, double>>& anchors,
+    const std::map<mac_addr, std::pair<double, double>>& anchors,
     const std::map<std::string, std::string>& properties)
 {
     try {

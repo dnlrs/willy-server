@@ -21,7 +21,7 @@ cfg::configuration::load_configuration(
     try {
         rapidxml::file<> xml_file(file_name.c_str());
 
-        std::map<uint64_t, std::pair<double, double>> local_anchors;
+        std::map<mac_addr, std::pair<double, double>> local_anchors;
         std::map<std::string, std::string> local_properties;
 
         xml::xml_processor unmarshaller;
@@ -135,7 +135,7 @@ cfg::configuration::get_anchors_number()
 }
 
 bool
-cfg::configuration::anchor_is_known(const uint64_t mac)
+cfg::configuration::anchor_is_known(const mac_addr mac)
 {
     // lock configuration
     std::lock_guard<std::recursive_mutex> 
@@ -146,7 +146,7 @@ cfg::configuration::anchor_is_known(const uint64_t mac)
 
 bool
 cfg::configuration::get_anchor_position(
-    const uint64_t mac,
+    const mac_addr mac,
     std::pair<double, double>& rval)
 {
     // lock configuration

@@ -1,6 +1,7 @@
 #ifndef XML_ANCHOR_H_INCLUDED
 #define XML_ANCHOR_H_INCLUDED
 
+#include "mac_addr.h"
 #include "rapidxml/rapidxml.hpp"
 #include <map>
 
@@ -28,13 +29,13 @@ namespace cfg
         class xml_anchors
         {
         public:
-            std::map<uint64_t, std::pair<double, double>> 
+            std::map<mac_addr, std::pair<double, double>> 
                 unmarshall(const rapidxml::xml_node<>* anchors_node);
 
             rapidxml::xml_node<>* 
                 marshall(
                     rapidxml::xml_document<>& doc,
-                    std::map<uint64_t, std::pair<double, double>> anchors);
+                    std::map<mac_addr, std::pair<double, double>> anchors);
         };
     }
 }
