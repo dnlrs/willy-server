@@ -41,6 +41,9 @@
     <ClInclude Include="include\ip_addr.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\localization.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\utils.cpp">

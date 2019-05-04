@@ -62,7 +62,6 @@
     <ClCompile Include="src\wifi_watchdog_analyzer.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\localization.h" />
     <ClInclude Include="src\sized_buffer.hpp" />
     <ClInclude Include="src\tests.h" />
   </ItemGroup>

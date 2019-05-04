@@ -14,6 +14,7 @@
     <ClInclude Include="include\anchor.h" />
     <ClInclude Include="include\device.h" />
     <ClInclude Include="include\ip_addr.h" />
+    <ClInclude Include="include\localization.h" />
     <ClInclude Include="include\mac_addr.h" />
     <ClInclude Include="include\packet.h" />
     <ClInclude Include="include\point2d.h" />
