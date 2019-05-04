@@ -6,6 +6,51 @@
 #include <cassert>
 #include <mstcpip.h>
 
+SOCKET setup_listening_socket(unsigned short listening_port)
+{
+    SOCKET listening_socket = INVALID_SOCKET;
+
+    // create socket
+    listening_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if (listening_socket == INVALID_SOCKET)
+        throw net_exception("setup_listening_socket: creation failed\n" +
+            wsa_etos(WSAGetLastError()));
+
+    // make listening socket non-blocking
+    set_non_blocking_socket(listening_socket);
+
+    // local endpoint parameters for listening socket
+    struct sockaddr_in service;
+    memset(&service, 0, sizeof(service));
+
+    service.sin_addr.s_addr = INADDR_ANY;
+    service.sin_port = htons(listening_port);
+    service.sin_family = AF_INET;
+
+    // Bind socket
+    int err = SOCKET_ERROR;
+    err = ::bind(
+        listening_socket, (const sockaddr*)&service, (int) sizeof(service));
+    if (err == SOCKET_ERROR) {
+        int wsa_err = WSAGetLastError();
+        closesocket(listening_socket);
+        listening_socket = INVALID_SOCKET;
+        throw net_exception("setup_listening_socket: binding failed\n" +
+            wsa_etos(wsa_err));
+    }
+
+    // start listening for incoming connection requests
+    err = ::listen(listening_socket, SOMAXCONN);
+    if (err == SOCKET_ERROR) {
+        int wsa_err = WSAGetLastError();
+        closesocket(listening_socket);
+        listening_socket = INVALID_SOCKET;
+        throw net_exception("setup_listening_socket: listeing failed\n" +
+            wsa_etos(wsa_err));
+    }
+
+    return listening_socket;
+}
 
 void
 set_keepalive_option(
@@ -21,8 +66,7 @@ set_keepalive_option(
 
     u_long bytes_returned = 0;
     tcp_keepalive keepalive_vals;
-
-    keepalive_vals.onoff = 1;
+    keepalive_vals.onoff             = 1;
     keepalive_vals.keepalivetime     = default_keepalive_time_ms;
     keepalive_vals.keepaliveinterval = default_keepalive_interval_ms;
 
@@ -48,7 +92,6 @@ set_keepalive_option(
             "Setting socket option KEEPALIVE failed\n", WSAGetLastError());
 }
 
-
 void
 set_non_blocking_socket(
     const SOCKET socket_in)
@@ -65,52 +108,53 @@ set_non_blocking_socket(
             "Cannot set non-blocking mode on socket\n", WSAGetLastError());
 }
 
-
 void
 close_connection(SOCKET* psocket)
 {
-	if (psocket == nullptr)
-		return;
-	
-	if (*psocket == INVALID_SOCKET)
-		return;
-	
-	if (shutdown(*psocket, SD_SEND) == SOCKET_ERROR)
+    if (psocket == nullptr)
+        return;
+
+    if (*psocket == INVALID_SOCKET)
+        return;
+
+    if (shutdown(*psocket, SD_SEND) == SOCKET_ERROR)
         debuglog("shutdown socket error or UDP socket (no harm)\n",
             wsa_etos(WSAGetLastError()));
 
     if (closesocket(*psocket) == SOCKET_ERROR)
         debuglog("closesocket error: ", wsa_etos(WSAGetLastError()));
-    
+
     *psocket = INVALID_SOCKET;
 }
 
-uint32_t 
+uint32_t
 read_sized_message(
     std::vector<uint8_t>& rval,
     const SOCKET raw_socket)
 {
     if (raw_socket == INVALID_SOCKET)
-        throw sock_exception(
-            "read_sized_message: parameter must be valid socket", raw_socket);
-    
+        throw net_exception("read_sized_message: "
+            "socket cannot be an INVALID_SOCKET");
+
     uint8_t buf[default_buffer_size];
-    memset(&buf, 0, default_buffer_size);
+    memset(&buf[0], 0, default_buffer_size);
 
     uint32_t read_bytes = 0;
     uint32_t msg_length = 4; // first 4 bytes
-    
+
     // read message size
     read_bytes = read_n(&(buf[0]), msg_length, raw_socket);
     assert(read_bytes == 4);
 
-    msg_length = ntohl((uint32_t)buf[0]);
-    if (msg_length > default_buffer_size)
-        throw net_exception(
-            "read_sized_message: msg length is greater than buffer size");
-    
-    // reset first 4 bytes 
-    *((uint32_t*) &buf[0]) = 0;
+    msg_length = ntohl(*((uint32_t*)&buf[0]));
+    if (msg_length > default_buffer_size) {
+        throw net_exception("read_sized_message: "
+            "msg length (" + std::to_string(msg_length) + ") " +
+            "is greater than max buffer size.");
+    }
+
+    // reset first 4 bytes
+    *((uint32_t*)&buf[0]) = 0;
 
     // read actual message
     read_bytes = read_n(&(buf[0]), msg_length, raw_socket);
@@ -120,11 +164,10 @@ read_sized_message(
     return msg_length;
 }
 
-
-uint32_t 
+uint32_t
 read_n(
     uint8_t* const dst_buffer,
-    const uint32_t msg_length, 
+    const uint32_t msg_length,
     const SOCKET raw_socket)
 {
     uint8_t* pmsg      = dst_buffer;
@@ -132,38 +175,39 @@ read_n(
     int32_t read_bytes = 0;
 
     long attempts = default_wouldblock_attempts;
-
     while (left_bytes > 0 && attempts > 0) {
-
-        read_bytes = recv(raw_socket, (char*)pmsg, left_bytes, 0);
+        read_bytes = ::recv(raw_socket, (char*)pmsg, left_bytes, 0);
 
         if (read_bytes == SOCKET_ERROR) {
             int wsa_err = WSAGetLastError();
 
             if (wsa_err == WSAEWOULDBLOCK) {
                 std::this_thread::sleep_for(
-                    std::chrono::milliseconds(default_wouldblock_sleep));
+                    std::chrono::milliseconds(
+                        default_wouldblock_sleep));
                 attempts--;
+                continue;
             }
             else {
-                throw sock_exception(
-                    "read_n: recv failed\n", wsa_err, raw_socket);
+                throw sock_exception("read_n: "
+                    "recv failed\n", wsa_err, raw_socket);
             }
         }
-        else {
 
-            if (read_bytes == 0)
-                throw sock_exception(
-                    "read_n: socket has been closed by peer", raw_socket);
-
-            pmsg       += read_bytes;
-            left_bytes -= read_bytes;
-            attempts    = default_wouldblock_attempts;
+        if (read_bytes == 0) {
+            throw sock_exception("read_n: "
+                "socket has been closed by peer", raw_socket);
         }
+
+        pmsg       += read_bytes;
+        left_bytes -= read_bytes;
+        attempts    = default_wouldblock_attempts;
     }
 
     if (attempts <= 0)
-        throw sock_exception("read_n: socket/connection is dead", raw_socket);
+        throw sock_exception("read_n: "
+            "connection transmission taking too long to complete",
+            raw_socket);
 
-    return (uint32_t) (pmsg - dst_buffer);
+    return (uint32_t)(pmsg - dst_buffer);
 }
