@@ -8,8 +8,8 @@
 #include <ws2def.h>
 #include <netioapi.h>
 
-class wARPtable {
-
+class wARPtable
+{
 public:
     wARPtable(ADDRESS_FAMILY address_family = AF_INET);
     ~wARPtable();
@@ -24,6 +24,5 @@ public:
 private:
     ADDRESS_FAMILY address_family;
     PMIB_IPNET_TABLE2 ip_table;
-
 };
 #endif // !WARPTABLE_H_INCLUDED
