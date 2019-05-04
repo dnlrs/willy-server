@@ -1,4 +1,5 @@
 #include "logger.h"
+#include "mac_addr.h"
 #include "worker.h"
 
 worker::worker(
@@ -11,16 +12,14 @@ worker::worker(
 
 worker::~worker()
 {
-    stop();
-    finish();
+    shutdown_worker();
 }
 
 void
 worker::start()
 {
-    /* Assuring a clean state before starting */
-    stop();
-    finish();
+    // this assures a clean start
+    shutdown_worker();
 
     stop_working  = false;
     worker_thread = std::thread(&worker::service, this);
@@ -40,9 +39,16 @@ worker::finish()
 }
 
 void
+worker::shutdown_worker()
+{
+    stop();
+    finish();
+}
+
+void
 worker::service()
 {
-    debuglog("worker::service: worker started [ ", std::this_thread::get_id(), "]");
+    debuglog("worker thread:", std::this_thread::get_id());
     while (stop_working == false) {
         sized_buffer buffer = raw_packets_queue->pop();
 
@@ -54,52 +60,60 @@ worker::service()
 
         packet_collector->submit_packet(new_packet);
     }
-    debuglog("worker::service: worker stopped [ ", std::this_thread::get_id(), "]");
 }
-
-
 
 packet
 worker::deserialize(sized_buffer buffer)
 {
-    uint32_t* pmsg = (uint32_t*) buffer.msg.data();
+    uint32_t* pmsg = (uint32_t*)buffer.msg.data();
 
-    uint32_t channel       = ntohl(*pmsg++); // channel
-    int32_t  rssi          = ntohl(*pmsg++); // rssi
-    uint32_t sequence_ctrl = ntohl(*pmsg++); // sequence control
-    uint64_t timestamp     = ntohl(*pmsg++); // timestamp
-    int32_t  ssid_length   = ntohl(*pmsg++); // ssid length
+    uint32_t channel       = ntohl(pmsg[0]); // channel
+    int32_t  rssi          = ntohl(pmsg[1]); // rssi
+    uint32_t sequence_ctrl = ntohl(pmsg[2]); // sequence control
+    uint64_t timestamp     = ntohl(pmsg[3]); // timestamp
+    int32_t  ssid_length   = ntohl(pmsg[4]); // ssid length
 
-    uint8_t* pmsg_byte = (uint8_t*) pmsg;
+    uint8_t* pmsg_byte = (uint8_t*)&pmsg[5];
 
     // device mac
-    uint64_t device_mac = 0;
-    for (int i = 0; i < MAC_LENGTH; i++) {
-        ((uint8_t*) device_mac)[i] = *pmsg_byte;
+    mac_addr device_mac;
+    for (int i = 0; i < mac_addr::mac_length; i++) {
+        device_mac[i] = *pmsg_byte;
         pmsg_byte++;
     }
 
     // packet hash
-    std::string hash;
-    for (int i = 0; i < MD5_HASH_LENGTH; i++) {
-        hash[i] = *pmsg_byte;
+    char raw_hash[packet::md5_hash_length + 1];
+    for (int i = 0; i < packet::md5_hash_length; i++) {
+        raw_hash[i] = *pmsg_byte;
         pmsg_byte++;
     }
-    hash[MD5_HASH_LENGTH] = '\0';
+    raw_hash[packet::md5_hash_length] = '\0';
+    std::string hash(raw_hash);
 
     // ssid
-    std::string ssid;
+    char raw_ssid[packet::max_ssid_length + 1];
     for (int32_t i = 0; i < ssid_length; i++) {
-        ssid[i] = *pmsg_byte;
+        raw_ssid[i] = *pmsg_byte;
         pmsg_byte++;
     }
-    ssid[ssid_length] = '\0';
+    raw_ssid[ssid_length] = '\0';
+    std::string ssid(raw_ssid);
 
-    packet rval (channel, rssi, sequence_ctrl, 
-        ssid_length, timestamp, 
-        device_mac, 0, ssid, hash);
+#ifdef _DEBUG
 
-    debuglog(rval.to_string());
+    packet rval(channel, rssi, sequence_ctrl,
+        ssid_length, timestamp,
+        device_mac, mac_addr(), ssid, hash);
 
+    debuglog("deserialized: ", rval.str());
     return rval;
+
+#else
+
+    return packet(channel, rssi, sequence_ctrl,
+        ssid_length, timestamp,
+        device_mac, mac_addr(), ssid, hash);
+
+#endif
 }
