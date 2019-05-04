@@ -8,7 +8,7 @@
 class sized_buffer {
 
 public:
-    sized_buffer() : msg_size(0), anchor_mac(0) {}
+    sized_buffer() : msg_size(0) {}
     
     std::vector<uint8_t> msg;
     uint32_t msg_size;
