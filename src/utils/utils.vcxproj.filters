@@ -26,9 +26,6 @@
     <ClInclude Include="include\anchor.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\wwsadata.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="include\Point2d.h">
       <Filter>Header Files</Filter>
     </ClInclude>

@@ -24,6 +24,7 @@
     <ClInclude Include="include\sync_queue.h" />
     <ClInclude Include="include\wARPtable.h" />
     <ClInclude Include="include\worker.h" />
+    <ClInclude Include="include\wwsadata.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\collector.cpp" />

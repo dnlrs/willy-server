@@ -20,7 +20,6 @@
     <ClInclude Include="include\point2d.h" />
     <ClInclude Include="include\utils.h" />
     <ClInclude Include="include\utl_exception.h" />
-    <ClInclude Include="include\wwsadata.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\ip_addr.cpp" />

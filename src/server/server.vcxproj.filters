@@ -53,6 +53,9 @@
     <ClInclude Include="include\connection_set.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\wwsadata.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\collector.cpp">
