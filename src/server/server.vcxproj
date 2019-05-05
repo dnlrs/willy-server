@@ -38,6 +38,23 @@
   <ItemGroup>
     <None Include="README.md" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\conf\conf.vcxproj">
+      <Project>{93cd3a4b-f7f5-4fea-8fbe-5908ecc84462}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\db\db.vcxproj">
+      <Project>{a9075ba3-27f2-471d-9c19-40c13ba9e9e9}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\localization\localization.vcxproj">
+      <Project>{1f750f57-783c-4dac-8fa6-75ede3eb12dd}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\log\log.vcxproj">
+      <Project>{3b6ce533-210e-43e4-a884-a6826c8dacbe}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\utils\utils.vcxproj">
+      <Project>{9c21b822-3fbb-4a85-90ce-0812c07f6217}</Project>
+    </ProjectReference>
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{5DBAB47F-2C1C-4849-B22F-5D8EDB2416FB}</ProjectGuid>

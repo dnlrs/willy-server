@@ -14,23 +14,23 @@
     <ClInclude Include="include\anchor.h" />
     <ClInclude Include="include\device.h" />
     <ClInclude Include="include\ip_addr.h" />
-    <ClInclude Include="include\localization.h" />
     <ClInclude Include="include\mac_addr.h" />
     <ClInclude Include="include\packet.h" />
-    <ClInclude Include="include\point2d.h" />
     <ClInclude Include="include\utils.h" />
     <ClInclude Include="include\utl_exception.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\ip_addr.cpp" />
     <ClCompile Include="src\mac_addr.cpp" />
-    <ClCompile Include="src\point2d.cpp" />
     <ClCompile Include="src\utils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="README.md" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\localization\localization.vcxproj">
+      <Project>{1f750f57-783c-4dac-8fa6-75ede3eb12dd}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\log\log.vcxproj">
       <Project>{3b6ce533-210e-43e4-a884-a6826c8dacbe}</Project>
     </ProjectReference>

@@ -26,9 +26,6 @@
     <ClInclude Include="include\anchor.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\Point2d.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="include\utl_exception.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -38,15 +35,9 @@
     <ClInclude Include="include\ip_addr.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\localization.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\utils.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Point2d.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\ip_addr.cpp">
