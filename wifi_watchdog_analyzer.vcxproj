@@ -14,7 +14,7 @@
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{C23F8814-7BE5-4F64-A00E-DB323782A094}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <WindowsTargetPlatformVersion>10.0.17134.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
@@ -42,41 +42,37 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Link />
+    <ClCompile />
     <Link>
       <SubSystem>Console</SubSystem>
     </Link>
+    <ClCompile />
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Link />
+    <ClCompile />
     <Link>
       <SubSystem>Console</SubSystem>
     </Link>
+    <ClCompile />
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="src\Conf.cpp" />
-    <ClCompile Include="src\Dealer.cpp" />
-    <ClCompile Include="src\Point2d.cpp" />
-    <ClCompile Include="src\Receiver.cpp" />
+    <ClCompile Include="src\tests.cpp" />
     <ClCompile Include="src\wifi_watchdog_analyzer.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\Conf.h" />
-    <ClInclude Include="src\Conf_exception.h" />
-    <ClInclude Include="src\Dealer.h" />
-    <ClInclude Include="src\localization.h" />
-    <ClInclude Include="src\Net_exception.h" />
-    <ClInclude Include="src\Point2d.h" />
-    <ClInclude Include="src\Receiver.h" />
+    <ClInclude Include="src\sized_buffer.hpp" />
+    <ClInclude Include="src\tests.h" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="src\db\db.vcxproj">
-      <Project>{a9075ba3-27f2-471d-9c19-40c13ba9e9e9}</Project>
+    <ProjectReference Include="src\server\server.vcxproj">
+      <Project>{5dbab47f-2c1c-4849-b22f-5d8edb2416fb}</Project>
     </ProjectReference>
-    <ProjectReference Include="src\log\log.vcxproj">
-      <Project>{3b6ce533-210e-43e4-a884-a6826c8dacbe}</Project>
-    </ProjectReference>
-    <ProjectReference Include="src\utils\utils.vcxproj">
-      <Project>{9c21b822-3fbb-4a85-90ce-0812c07f6217}</Project>
-    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="README.md" />
+    <None Include="SETUP_VS_PROJECT.md" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -1,10 +1,11 @@
+#include "logger.h"
 #include "utils.h"
 #include <string>
 #include <vector>
 #include <algorithm>
+#include "winsock2.h"
+#include "ws2tcpip.h"
 #include <windows.h> // windef.h - do not include directly
-
-
 
 std::string timetos(struct tm time)
 {
@@ -36,69 +37,50 @@ struct tm epochTotm(const time_t rawtime)
     return ptm;
 }
 
-
-
-
-uint64_t mac_str2int(const std::string mac)
+uint64_t get_current_time()
 {
-    if (!mac_is_valid(mac.c_str()))
-        return 0;
+    std::time_t current_time = std::time(nullptr);
 
-    std::string local_mac(mac);
-    local_mac.erase(
-        remove(local_mac.begin(), local_mac.end(), ':'),
-        local_mac.end());
-
-    local_mac.erase(
-        remove(local_mac.begin(), local_mac.end(), '-'),
-        local_mac.end());
-
-    return strtoull(local_mac.c_str(), NULL, 16);
+    /* this may break since time_t type is not standard-specified, 
+     * yet it is implemented as uint64_t in windows 
+     */
+    return (uint64_t)current_time;
 }
 
-std::string mac_int2str(const uint64_t mac)
-{
-    static const char* digits = "0123456789ABCDEF";
-    uint64_t local_mac = mac;
-    char rval[18]; // xx:xx:xx:xx:xx:xx'\0'
 
-    int pos = 17;
-    for (int byte = 5; byte >= 0; byte--) {
-        rval[pos--] = ':';
-        rval[pos--] = digits[local_mac & 0x0f];
-        local_mac >>= 4;
-        rval[pos--] = digits[local_mac & 0x0f];
-        local_mac >>= 4;
+
+constexpr size_t af_inet_address_size = 16;
+
+int
+str_is_valid_int(const char* str)
+{
+    if (!str) return 0;
+    while (*str) {
+        if (!isdigit(*str))
+            return 0;
+        ++str;
     }
-    rval[17] = '\0';
 
-    return std::string(rval);
+    return 1;
 }
 
-int mac_is_valid(const char* mac)
+int
+str_is_valid_double(const char* str)
 {
-    if (!mac)
-        return 0;
+    if (!str) return 0;
 
-    int i = 0;
-    int s = 0;
-
-    while (*mac) {
-        if (isxdigit(*mac))
-            i++;
-        else if (*mac == ':' || *mac == '-') {
-            if (i == 0 || i / 2 - 1 != s)
-                break;
-            ++s;
-        }
-        else
-            s = -1;
-        ++mac;
+    int v = 0;
+    while (*str) {
+        if (!isdigit(*str))
+            if (*str == ',' || *str == '.')
+                v++;
+            else
+                return 0;
+        ++str;
     }
-    return (i == 12 && (s == 5 || s == 0));
+
+    return (v == 1);
 }
-
-
 
 std::string
 wsa_etos(int error)

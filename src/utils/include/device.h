@@ -2,23 +2,36 @@
 #define DEVICE_H_INCLUDED
 #pragma once
 
+#include "utils.h"
+#include "mac_addr.h"
+#include "point2d.h"
+#include <cstdint>
+#include <string>
 
 class device {
 
 public:
-    device() : mac(0), timestamp(0), pos_x(0), pos_y(0) {}
-
     device(
-        uint64_t mac_in, uint64_t timestamp_in, 
-        double pos_x_in, double pos_y_in) :
-            mac(mac_in), timestamp(timestamp_in),
-            pos_x(pos_x_in), pos_y(pos_y_in) {}
+        mac_addr mac = mac_addr(), 
+        uint64_t timestamp = 0, 
+        double pos_x = 0, 
+        double pos_y = 0) :
+            mac(mac), timestamp(timestamp),
+            position(pos_x, pos_y) {}
+
+    std::string str()
+    {
+        return std::string(
+            "mac: "       + mac.str() +
+            " timstamp: " + std::to_string(timestamp) +
+            " position: " + position.str());
+    }
 
 public:
-    uint64_t mac;
+    mac_addr mac;
     uint64_t timestamp;
-    double pos_x;
-    double pos_y;
+
+    point2d position;
 };
 
 #endif // !DEVICE_H_INCLUDED

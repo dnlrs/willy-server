@@ -9,6 +9,9 @@
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hh;hpp;hxx;hm;inl;inc;ipp;xsd</Extensions>
     </Filter>
+    <Filter Include="Doc Files">
+      <UniqueIdentifier>{91d5ed1f-85cd-48c1-b43e-24c13c017eb4}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\log_exception.hpp">
@@ -37,5 +40,10 @@
     <ClCompile Include="src\log_policy_std.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="README.md">
+      <Filter>Doc Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

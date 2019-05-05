@@ -1,0 +1,23 @@
+<configuration>
+	<anchors n="1">
+		<anchor>
+			<mac>30:AE:A4:75:1F:20</mac>
+			<position>
+				<x>0.000000</x>
+				<y>0.000000</y>
+			</position>
+		</anchor>
+	</anchors>
+	<properties n="2">
+		<property>
+			<name>p1</name>
+			<value>v1</value>
+		</property>
+		<property>
+			<name>p2</name>
+			<value>v2</value>
+		</property>
+	</properties>
+</configuration>
+
+
