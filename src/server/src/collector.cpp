@@ -1,6 +1,5 @@
 #include "collector.h"
 #include "coll_exception.h"
-#include "localization.h"
 #include <cassert>
 
 collector::collector(
@@ -54,7 +53,7 @@ collector::process_readings(
     packet new_packet,
     std::map<mac_addr, int32_t> readings)
 {
-    std::vector<std::pair<point2d, int>> measurements;
+    std::vector<sample> measurements;
 
     for (auto reading : readings) {
         std::pair<double, double> anchor_coordinates;
@@ -69,12 +68,11 @@ collector::process_readings(
 
         point2d anchor_position(anchor_coordinates);
         measurements.push_back(
-            std::make_pair(anchor_position, reading.second));
+            sample(anchor_position, reading.second));
     }
 
     assert(measurements.size() == anchors_number);
-
-    point2d device_position = weighted_loc(measurements);
+    point2d device_position = locator.localize_device(measurements);
 
 #ifdef _DEBUG
     device rval(

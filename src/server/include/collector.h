@@ -5,6 +5,7 @@
 #include "cfg.h"
 #include "db.h"
 #include "device.h"
+#include "ips.h"
 #include "packet.h"
 #include <cstdint>
 #include <string>
@@ -61,6 +62,9 @@ private:
 
 private:
     int anchors_number = 0;
+
+    /* localization system */
+    ips locator;
 
     std::mutex packets_lock;
 

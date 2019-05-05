@@ -106,7 +106,7 @@ worker::deserialize(sized_buffer buffer)
         ssid_length, timestamp,
         device_mac, mac_addr(), ssid, hash);
 
-    debuglog("deserialized:", rval.str());
+    //debuglog("deserialized:", rval.str());
     return rval;
 
 #else
