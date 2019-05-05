@@ -1,3 +1,13 @@
+
+Anchor macs:
+30:AE:A4:1C:38:50
+30:AE:A4:75:1F:20
+30:AE:A4:75:29:28
+30:AE:A4:3B:A2:F8
+30:AE:A4:7A:F9:10
+
+Configuration file format:
+```xml
 <configuration>
 	<anchors n="1">
 		<anchor>
@@ -8,16 +18,10 @@
 			</position>
 		</anchor>
 	</anchors>
-	<properties n="2">
-		<property>
-			<name>p1</name>
-			<value>v1</value>
-		</property>
-		<property>
-			<name>p2</name>
-			<value>v2</value>
-		</property>
+	<properties n="0">
 	</properties>
 </configuration>
+```
+
 
 

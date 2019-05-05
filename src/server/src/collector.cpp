@@ -75,17 +75,19 @@ collector::process_readings(
     point2d device_position = locator.localize_device(measurements);
 
 #ifdef _DEBUG
+
     device rval(
         new_packet.device_mac, new_packet.timestamp,
         device_position.x, device_position.y);
 
     debuglog("localized:", rval.str());
-
     return rval;
+
 #else
+
     return device(
         new_packet.device_mac, new_packet.timestamp,
-        device_position.x, device_position.y)
+        device_position.x, device_position.y);
 #endif
 }
 
@@ -94,7 +96,6 @@ collector::store_data(
     packet new_packet,
     device new_device)
 {
-    return;
     try {
         db_storage.add_packet(new_packet, new_packet.anchor_mac);
         db_storage.add_device(new_device);

@@ -35,7 +35,6 @@ namespace cfg {
         {
             std::lock_guard<std::recursive_mutex> lock(configuration_access);
             load_configuration(file_name);
-            save_configuration();
             if ( make_default )
                 configuration_file = file_name;
         }

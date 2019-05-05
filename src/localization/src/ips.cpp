@@ -28,7 +28,6 @@ point2d ips::unilateration(
     const sample measurement) const
 {
     double distance   = get_distance_from_rssi(measurement.rssi, 1);
-    assert(distance > 0 && distance < 100);
 
     return point2d(
         measurement.anchor_position.x + distance,
