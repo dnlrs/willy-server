@@ -1,12 +1,15 @@
 #include "collector.h"
 #include "coll_exception.h"
+#include "utils.h"
 #include <cassert>
+#include <utility>
 
 collector::collector(
     std::shared_ptr<cfg::configuration> context_in) :
     context(context_in)
 {
     anchors_number = context->get_anchors_number();
+    last_flushed   = 0;
     try {
         db_storage = db::database("database.db", anchors_number);
         db_storage.open(true);
@@ -46,6 +49,58 @@ collector::submit_packet(packet new_packet)
 
     if (timestamps.size() > default_max_container_size)
         clean_container();
+}
+
+void
+collector::flush()
+{
+    std::unique_lock<std::mutex> guard(devices_lock);
+    uint64_t now = get_current_time();
+
+    if (now - last_flushed < default_flushing_interval)
+        return;
+
+    for (auto dev : devices) {
+        for (auto pos : dev.second) {
+            if (pos.first < (now - 1)) {
+                device new_device(
+                    dev.first.mac,          /* device mac */
+                    pos.first,              /* timestamp  */
+                    pos.second.first.x,     /* x position */
+                    pos.second.first.y);    /* y position */
+
+                try {
+                    db_storage.add_device(new_device);
+                }
+                catch (db::db_exception& dbe) {
+                    if (dbe.why() == db::db_exception::type::error)
+                        throw coll_exception("collector::store_data: "
+                            "failed, persistence layer fail\n" + std::string(dbe.what()));
+                }
+            }
+        }
+    }
+
+    /* Remove the device if after removing all positions associated with old timestamps,
+     * there are no timestamps left with valid positions 
+     */
+    auto devices_it = devices.begin();
+    while (devices_it != devices.end()) {
+        auto positions_it = devices_it->second.begin();
+        while (positions_it != devices_it->second.end()) {
+            if (positions_it->first < (now - 1))
+                positions_it = devices_it->second.erase(positions_it);
+            else
+                positions_it++;
+        }
+
+        if (devices_it->second.empty())
+            devices_it = devices.erase(devices_it);
+        else
+            devices_it++;
+    }
+
+    last_flushed = now;
 }
 
 device
@@ -95,16 +150,26 @@ void
 collector::store_data(
     packet new_packet,
     device new_device)
+    /*
+     * Insert packet immediately into database. Defer device insertion because its
+     * position, given a timestamp may be an average among multiple estimated
+     * positions.
+     */
 {
     try {
         db_storage.add_packet(new_packet, new_packet.anchor_mac);
-        db_storage.add_device(new_device);
+        //db_storage.add_device(new_device);
     }
     catch (db::db_exception& dbe) {
         if (dbe.why() == db::db_exception::type::error)
             throw coll_exception("collector::store_data: "
                 "failed, persistence layer fail\n" + std::string(dbe.what()));
     }
+
+    std::unique_lock<std::mutex> guard(devices_lock);
+    auto old_avg_pos = devices[new_device][new_device.timestamp];
+    devices[new_device][new_device.timestamp] =
+        locator.update_centroid(old_avg_pos, new_device.position);
 }
 
 void
@@ -112,6 +177,8 @@ collector::clean_container()
 {
     debuglog("collector::clean_container: cleaning...");
     uint64_t current_time = get_current_time();
+
+
 
     std::vector<std::string> old_hashes;
     for (auto timestamp : timestamps) {

@@ -15,6 +15,8 @@
 constexpr long int default_max_container_size = 1000;
 constexpr uint64_t default_max_timestamp_diff = 10; // seconds
 
+constexpr uint64_t default_flushing_interval = 5; // seconds
+
 class collector
 {
 public:
@@ -37,6 +39,10 @@ public:
      * This function will be executed by different worker threads.
      * */
     void submit_packet(packet new_packet);
+
+
+    /* Synchronizes data in this container with the underneath database */
+    void flush();
 
 private:
     /* Sets up and calls the localization routine
@@ -67,12 +73,17 @@ private:
     ips locator;
 
     std::mutex packets_lock;
-
-    /* [packet hash -> [anchor mac -> rssi measurement] */
+    /* [packet hash -> [anchor mac -> rssi measurement]] */
     std::map<std::string, std::map<mac_addr, int32_t>> rssi_readings;
-
     /* [packet hash -> timestamp] */
     std::map<std::string, uint64_t> timestamps; 
+
+    std::mutex devices_lock;
+    /* [device -> [timestamp -> [position_average, points_number]]] */
+    std::map<device, std::map<uint64_t, std::pair<point2d, int>>> devices;
+
+    /* a timestamp that indicated when the lash flush was done */
+    uint64_t last_flushed = 0;
 
     /* system wide configuration */
     std::shared_ptr<cfg::configuration> context = nullptr;

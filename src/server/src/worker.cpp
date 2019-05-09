@@ -52,6 +52,8 @@ worker::service()
     while (stop_working == false) {
         sized_buffer buffer = raw_packets_queue->pop();
 
+        packet_collector->flush();
+
         if (buffer.msg_size == 0)
             continue; // empty buffer means empty queue
 

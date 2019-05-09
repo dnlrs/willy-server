@@ -29,6 +29,22 @@ public:
         return multilateration(measurements);
     }
 
+    /* Returns the centroid and the number of points used to calculate it
+     * 
+     * ...given a centroid and the number of points userd to calculate 
+     * it and a new point.
+     */
+    std::pair<point2d, int> update_centroid(
+        std::pair<point2d, int> avg_pos,
+        point2d new_pos) const
+    {
+        double sum_x = avg_pos.first.x * (double)avg_pos.second + new_pos.x;
+        double sum_y = avg_pos.first.y * (double)avg_pos.second + new_pos.y;
+        int k = avg_pos.second + 1;
+
+        return std::make_pair(point2d(sum_x / k, sum_y / k), k);
+    }
+
 private:
     /* simple log-normal shadowing path loss model */
     double get_distance_from_rssi(int rssi, double multiplier) const;

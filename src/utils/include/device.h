@@ -27,6 +27,8 @@ public:
             " position: " + position.str());
     }
 
+    bool operator<(const device& other) const { return mac < other.mac; }
+
 public:
     mac_addr mac;
     uint64_t timestamp;

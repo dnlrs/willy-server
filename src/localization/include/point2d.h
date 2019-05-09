@@ -15,6 +15,8 @@ public:
     
     ~point2d() {}
 
+    point2d& operator=(const point2d& other);
+
     bool operator<(const point2d& other) const;
     bool operator==(const point2d& other) const;
     bool operator!=(const point2d& other) const;

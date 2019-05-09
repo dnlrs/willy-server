@@ -11,6 +11,16 @@ point2d compute_middle_point(const point2d p1, const point2d p2)
     return point2d((p1.x + p2.x)/2, (p1.y + p2.y)/2);
 }
 
+point2d& 
+point2d::operator=(const point2d& other)
+{
+    x = other.x;
+    y = other.y;
+
+    return *this;
+}
+
+
 bool 
 point2d::operator<(const point2d& other) const 
 {
