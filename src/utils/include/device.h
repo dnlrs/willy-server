@@ -22,9 +22,9 @@ public:
     std::string str()
     {
         return std::string(
-            "mac: "       + mac.str() +
-            " timstamp: " + std::to_string(timestamp) +
-            " position: " + position.str());
+            "mac: "        + mac.str() +
+            " timestamp: " + std::to_string(timestamp) +
+            " position: "  + position.str());
     }
 
     bool operator<(const device& other) const { return mac < other.mac; }

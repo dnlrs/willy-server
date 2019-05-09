@@ -12,10 +12,11 @@
 #include <map>
 #include <mutex>
 
-constexpr long int default_max_container_size = 1000;
-constexpr uint64_t default_max_timestamp_diff = 10; // seconds
+constexpr long int collector_max_container_size = 1000;
+constexpr uint64_t collector_max_timestamp_diff = 10; // seconds
 
-constexpr uint64_t default_flushing_interval = 5; // seconds
+constexpr uint64_t collector_flushing_interval = 5; // seconds
+constexpr uint64_t collector_flushing_overlap  = 1; // seconds
 
 class collector
 {
@@ -62,7 +63,7 @@ private:
     /* Cleans the container from old packets and readings
      *
      * Retrieves current time and deletes from container all references
-     * to packets older than $(default_max_timestamp_diff) seconds.
+     * to packets older than $(collector_max_timestamp_diff) seconds.
      * */
     void clean_container();
 
@@ -73,16 +74,14 @@ private:
     ips locator;
 
     std::mutex packets_lock;
-    /* [packet hash -> [anchor mac -> rssi measurement]] */
-    std::map<std::string, std::map<mac_addr, int32_t>> rssi_readings;
-    /* [packet hash -> timestamp] */
-    std::map<std::string, uint64_t> timestamps; 
+    /* [packet -> [anchor mac -> rssi measurement]] */
+    std::map<packet, std::map<mac_addr, int32_t>> packets;
 
     std::mutex devices_lock;
     /* [device -> [timestamp -> [position_average, points_number]]] */
     std::map<device, std::map<uint64_t, std::pair<point2d, int>>> devices;
 
-    /* a timestamp that indicated when the lash flush was done */
+    /* a timestamp that indicates when the lash flush was done */
     uint64_t last_flushed = 0;
 
     /* system wide configuration */

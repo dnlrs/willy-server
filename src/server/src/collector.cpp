@@ -1,6 +1,7 @@
 #include "collector.h"
 #include "coll_exception.h"
 #include "utils.h"
+#include <algorithm>
 #include <cassert>
 #include <utility>
 
@@ -30,16 +31,13 @@ collector::submit_packet(packet new_packet)
 {
     std::unique_lock<std::mutex> guard(packets_lock);
 
-    std::string hash       = new_packet.hash;
-    int32_t     rssi       = new_packet.rssi;
-    mac_addr    anchor_mac = new_packet.anchor_mac;
+    int32_t  rssi       = new_packet.rssi;
+    mac_addr anchor_mac = new_packet.anchor_mac;
 
-    rssi_readings[hash][anchor_mac] = rssi;
-    timestamps[hash] = new_packet.timestamp;
+    packets[new_packet][anchor_mac] = rssi;
 
-    if (rssi_readings[hash].size() == anchors_number) {
-        timestamps.erase(hash);
-        auto readings = rssi_readings.extract(hash);
+    if (packets[new_packet].size() == anchors_number) {
+        auto readings = packets.extract(new_packet);
 
         guard.unlock();
         device new_device = process_readings(new_packet, readings.mapped());
@@ -47,27 +45,40 @@ collector::submit_packet(packet new_packet)
         guard.lock();
     }
 
-    if (timestamps.size() > default_max_container_size)
+    if (packets.size() > collector_max_container_size)
         clean_container();
 }
 
 void
 collector::flush()
+/*
+ * Store into database all device localizations older than
+ * current time (minus overlap).
+ * Remove the device entry if after removing all positions
+ * associated with old timestamps, there are no timestamps
+ * left (nor positions).
+ */
 {
     std::unique_lock<std::mutex> guard(devices_lock);
-    uint64_t now = get_current_time();
-
-    if (now - last_flushed < default_flushing_interval)
+    
+    /* check if the right time has passed since last time */
+    uint64_t now = get_current_time() - collector_flushing_overlap;
+    if (now - last_flushed < collector_flushing_interval)
         return;
-
-    for (auto dev : devices) {
-        for (auto pos : dev.second) {
-            if (pos.first < (now - 1)) {
+    
+    auto dev = devices.begin();
+    while (dev != devices.end()) {
+        auto pos = dev->second.begin();
+        while (pos != dev->second.end()) {
+            uint64_t timestamp = pos->first;
+            if (timestamp < now) {
                 device new_device(
-                    dev.first.mac,          /* device mac */
-                    pos.first,              /* timestamp  */
-                    pos.second.first.x,     /* x position */
-                    pos.second.first.y);    /* y position */
+                    dev->first.mac,          /* device mac */
+                    timestamp,               /* timestamp  */
+                    pos->second.first.x,     /* x position */
+                    pos->second.first.y);    /* y position */
+
+                debuglog("[device]", new_device.str());
 
                 try {
                     db_storage.add_device(new_device);
@@ -77,29 +88,22 @@ collector::flush()
                         throw coll_exception("collector::store_data: "
                             "failed, persistence layer fail\n" + std::string(dbe.what()));
                 }
+
+                /* remove this centroid and update iterator */
+                pos = dev->second.erase(pos);
+            }
+            else {
+                pos++;
             }
         }
-    }
 
-    /* Remove the device if after removing all positions associated with old timestamps,
-     * there are no timestamps left with valid positions 
-     */
-    auto devices_it = devices.begin();
-    while (devices_it != devices.end()) {
-        auto positions_it = devices_it->second.begin();
-        while (positions_it != devices_it->second.end()) {
-            if (positions_it->first < (now - 1))
-                positions_it = devices_it->second.erase(positions_it);
-            else
-                positions_it++;
-        }
-
-        if (devices_it->second.empty())
-            devices_it = devices.erase(devices_it);
+        if (dev->second.empty())
+            dev = devices.erase(dev);
         else
-            devices_it++;
+            dev++;
     }
 
+    /* update last flushed */
     last_flushed = now;
 }
 
@@ -122,43 +126,31 @@ collector::process_readings(
                 "no anchor exists with specified mac");
 
         point2d anchor_position(anchor_coordinates);
-        measurements.push_back(
-            sample(anchor_position, reading.second));
+        measurements.push_back(sample(anchor_position, reading.second));
     }
 
     assert(measurements.size() == anchors_number);
     point2d device_position = locator.localize_device(measurements);
 
-#ifdef _DEBUG
-
-    device rval(
-        new_packet.device_mac, new_packet.timestamp,
-        device_position.x, device_position.y);
-
-    debuglog("localized:", rval.str());
-    return rval;
-
-#else
-
     return device(
-        new_packet.device_mac, new_packet.timestamp,
-        device_position.x, device_position.y);
-#endif
+        new_packet.device_mac, 
+        new_packet.timestamp,
+        device_position.x, 
+        device_position.y);
 }
 
 void
 collector::store_data(
     packet new_packet,
     device new_device)
-    /*
-     * Insert packet immediately into database. Defer device insertion because its
-     * position, given a timestamp may be an average among multiple estimated
-     * positions.
-     */
+/*
+ * Insert packet immediately into database. Defer device
+ * insertion because its position, given a timestamp may
+ * be an average among multiple estimated positions.
+ */
 {
     try {
         db_storage.add_packet(new_packet, new_packet.anchor_mac);
-        //db_storage.add_device(new_device);
     }
     catch (db::db_exception& dbe) {
         if (dbe.why() == db::db_exception::type::error)
@@ -167,28 +159,22 @@ collector::store_data(
     }
 
     std::unique_lock<std::mutex> guard(devices_lock);
-    auto old_avg_pos = devices[new_device][new_device.timestamp];
+
+    auto old_centroid = devices[new_device][new_device.timestamp];
     devices[new_device][new_device.timestamp] =
-        locator.update_centroid(old_avg_pos, new_device.position);
+        locator.update_centroid(old_centroid, new_device.position);
 }
 
 void
 collector::clean_container()
 {
-    debuglog("collector::clean_container: cleaning...");
-    uint64_t current_time = get_current_time();
+    uint64_t now = get_current_time();
 
-
-
-    std::vector<std::string> old_hashes;
-    for (auto timestamp : timestamps) {
-        if ((current_time - timestamp.second) >= default_max_timestamp_diff) {
-            old_hashes.push_back(timestamp.first);
-        }
-    }
-
-    for (auto hash : old_hashes) {
-        timestamps.erase(hash);
-        rssi_readings.erase(hash);
+    auto pack = packets.begin();
+    while (pack != packets.end()) {
+        if ((now - pack->first.timestamp) >= collector_max_timestamp_diff)
+            pack = packets.erase(pack);
+        else
+            pack++;
     }
 }

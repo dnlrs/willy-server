@@ -33,6 +33,8 @@ public:
             ssid(in_ssid),
             hash(in_hash) {}
 
+    bool operator<(const packet& other) const { return hash < other.hash; }
+
     std::string str()
     {
         return std::string(
