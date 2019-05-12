@@ -44,9 +44,6 @@
     <ClInclude Include="include\sync_queue.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\wARPtable.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="include\worker.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -68,9 +65,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\socket_utils.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\wARPtable.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\worker.cpp">
