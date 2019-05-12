@@ -13,7 +13,7 @@ constexpr unsigned long int default_keepalive_interval_ms = 1000;
 constexpr long int default_buffer_size = 1024;
 
 // sleep time if the nonblocking socket would block in ms
-constexpr long int default_wouldblock_sleep    = 500;
+constexpr long int default_wouldblock_sleep    = 1000;
 // max attempts waiting for a non-blocking socket
 constexpr long int default_wouldblock_attempts = 5;
 
@@ -23,6 +23,9 @@ constexpr long int default_wouldblock_attempts = 5;
  * indicated port.
  */
 SOCKET setup_listening_socket(unsigned short listening_port);
+
+/* setups the udp-broadcasting socket */
+SOCKET setup_for_broadcasting();
 
 void set_keepalive_option(const SOCKET anchor_socket);
 void set_non_blocking_socket(const SOCKET socket_in);
@@ -66,5 +69,9 @@ read_n(
     uint8_t* const dst_buffer,
     const uint32_t msg_length,
     const SOCKET raw_socket);
+
+void bcast_udp_message(
+    char* msg, uint32_t msg_size, 
+    uint16_t dst_port, SOCKET raw_socket);
 
 #endif // !SOCKET_UTILS_H_INCLUDED

@@ -18,14 +18,17 @@
 #include <mutex>
 #include <winsock2.h>
 
-#pragma comment(lib, "Ws2_32.lib")   //winSock library
-#pragma comment(lib, "iphlpapi.lib") //windows IP Helper API
+#pragma comment(lib, "Ws2_32.lib")   // winSock library
+#pragma comment(lib, "iphlpapi.lib") // windows IP Helper API
 
 /* listening port for incoming connections */
-#define SERVICE_PORT 27015
+#define SERVICE_PORT 57015
+#define ADVERTS_PORT 57016
 
 constexpr long int dealer_waiting_time_ms = 200;
 constexpr int      dealer_max_accept_attempts = 10;
+
+constexpr int dealer_upd_advers_num = 10;
 
 /*
  * The dealer is the one who is in charge to handle the connection with the
@@ -75,6 +78,9 @@ private:
      * went down.
      */
     void service();
+
+    /* Broadcasts (on local network) a UDP message */
+    void advertise_service();
 
     /* Manages an incoming anchor connection request
      *

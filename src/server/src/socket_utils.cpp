@@ -6,6 +6,12 @@
 #include <cassert>
 #include <mstcpip.h>
 
+using namespace std::this_thread;
+using namespace std::chrono;
+
+using std::vector;
+using std::to_string;
+
 SOCKET setup_listening_socket(unsigned short listening_port)
 {
     SOCKET listening_socket = INVALID_SOCKET;
@@ -50,6 +56,25 @@ SOCKET setup_listening_socket(unsigned short listening_port)
     }
 
     return listening_socket;
+}
+
+SOCKET setup_for_broadcasting()
+{
+    SOCKET rval = INVALID_SOCKET;
+
+    rval = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    if (rval == INVALID_SOCKET)
+        throw net_exception("setup_for_broadcasting: socket failed\n" +
+            wsa_etos(WSAGetLastError()));
+
+    int err = 1;
+    bool value = true;
+    err = setsockopt(rval, SOL_SOCKET, SO_BROADCAST, (char*)&value, sizeof(int));
+    if (err == SOCKET_ERROR)
+        throw net_exception("setup_for_broadcasting: setsockopt failed\n" +
+            wsa_etos(WSAGetLastError()));
+
+    return rval;
 }
 
 void
@@ -129,7 +154,7 @@ close_connection(SOCKET* psocket)
 
 uint32_t
 read_sized_message(
-    std::vector<uint8_t>& rval,
+    vector<uint8_t>& rval,
     const SOCKET raw_socket)
 {
     if (raw_socket == INVALID_SOCKET)
@@ -149,7 +174,7 @@ read_sized_message(
     msg_length = ntohl(*((uint32_t*)&buf[0]));
     if (msg_length > default_buffer_size) {
         throw net_exception("read_sized_message: "
-            "msg length (" + std::to_string(msg_length) + ") " +
+            "msg length (" + to_string(msg_length) + ") " +
             "is greater than max buffer size.");
     }
 
@@ -160,7 +185,7 @@ read_sized_message(
     read_bytes = read_n(&(buf[0]), msg_length, raw_socket);
     assert(read_bytes == msg_length);
 
-    rval = std::move(std::vector<uint8_t>(buf, buf + msg_length));
+    rval = std::move(vector<uint8_t>(buf, buf + msg_length));
     return msg_length;
 }
 
@@ -182,9 +207,8 @@ read_n(
             int wsa_err = WSAGetLastError();
 
             if (wsa_err == WSAEWOULDBLOCK) {
-                std::this_thread::sleep_for(
-                    std::chrono::milliseconds(
-                        default_wouldblock_sleep));
+                sleep_for(milliseconds(
+                    default_wouldblock_sleep));
                 attempts--;
                 continue;
             }
@@ -210,4 +234,33 @@ read_n(
             raw_socket);
 
     return (uint32_t)(pmsg - dst_buffer);
+}
+
+void bcast_udp_message(
+    char* msg,
+    uint32_t msg_size,
+    uint16_t dst_port,
+    SOCKET raw_socket)
+{
+    struct sockaddr_in target;
+    memset(&target, 0, sizeof(target));
+
+    target.sin_addr.s_addr = INADDR_BROADCAST;
+    target.sin_port   = htons(dst_port);
+    target.sin_family = AF_INET;
+
+    int message_size = msg_size;
+    int sent_bytes = 0;
+    char* pmsg     = msg;
+    while (message_size > 0) {
+        sent_bytes = ::sendto(raw_socket, pmsg, message_size, NULL,
+            (const sockaddr*)&target, sizeof(target));
+
+        if (sent_bytes == SOCKET_ERROR)
+            throw net_exception("bcast_udp_message: sendto failed to send message" +
+                wsa_etos(WSAGetLastError()));
+
+        pmsg         += sent_bytes;
+        message_size -= sent_bytes;
+    }
 }

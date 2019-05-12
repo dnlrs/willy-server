@@ -1,9 +1,15 @@
 #include "dealer.h"
 #include "utils.h"
 #include "socket_utils.h"
-#include "wARPtable.h"
 #include <ws2tcpip.h>
 #include <mstcpip.h>
+
+using namespace std::chrono;
+using namespace std::this_thread;
+
+using std::make_shared;
+using std::make_unique;
+using std::string;
 
 dealer::dealer()
 {
@@ -22,54 +28,61 @@ dealer::~dealer()
         closesocket(listening_socket);
 }
 
-void dealer::init(std::string conf_file)
+void dealer::init(string conf_file)
+/*
+    0. Stop the server if running
+    1. create and import server configuration
+    2. setup listening socket
+*/
 {
-    // avoid changing configuration while the server is running
     if (preceiver != nullptr)
         shutdown();
 
-    // new configuration
-    context = std::make_shared<cfg::configuration>();
+    context = make_shared<cfg::configuration>();
 
-    // read configuration
     context->import_configuration(conf_file, true);
     if (context->get_anchors_number() == 0)
         throw net_exception("dealer::init: "
             "no anchors found in configuration file");
     debuglog("dealer::init: importing configuration... OK");
 
-    // avoid trying to open two listneing sockets
     if (listening_socket != INVALID_SOCKET)
         closesocket(listening_socket);
 
-    // setup listening socket
     listening_socket = setup_listening_socket(SERVICE_PORT);
     debuglog("dealer::init: listening socket setup... OK");
 }
 
 void dealer::start()
+/*
+    0. shutdown server if running
+    1. initialize connections set
+    2. initialize receiver
+    3. start receiver
+    4. deploy dealer's thread
+*/
 {
-    // this assures a clean start
     if (preceiver != nullptr)
         shutdown();
 
-    // new connections storage
-    connections = std::make_shared<connection_set>();
+    connections = make_shared<connection_set>();
 
-    // start receiver
     dead_anchors =
-        std::make_shared<std::atomic_int>(context->get_anchors_number());
-    preceiver = 
-        std::make_unique<receiver>(*this, context, connections, dead_anchors);
+        make_shared<std::atomic_int>(context->get_anchors_number());
+    preceiver =
+        make_unique<receiver>(*this, context, connections, dead_anchors);
     preceiver->start();
 
-    // start dealer's thread
     stop_working  = false;
     dealer_thread = std::thread(&dealer::service, this);
     debuglog("dealer::start: dealer thread started... OK");
 }
 
 void dealer::stop()
+/*   
+    0. stop receiver if running
+    1. ask dealer's thread to stop
+*/
 {
     if (preceiver != nullptr)
         preceiver->stop();
@@ -79,6 +92,12 @@ void dealer::stop()
 }
 
 void dealer::finish()
+/*
+    0. finish receiver
+    1. join dealer's thread if joinable
+    2. reset shared variables
+    3. close all existing connections
+*/
 {
     if (preceiver != nullptr)
         preceiver->finish();
@@ -102,41 +121,45 @@ void dealer::shutdown()
 
 void
 dealer::service()
+/*
+    0. while (OK)
+        1. advertise service
+        2. connect anchor
+        3. get anchor position from configuration
+        4. add new connection to connections set
+*/
 {
-    debuglog("dealer thread:", std::this_thread::get_id());
+    debuglog("dealer thread:", get_id());
     debuglog("dealer::service: "
         "waiting for ", dead_anchors->load(), " anchors to connect...");
 
     std::unique_lock<std::mutex> guard(dealer_mtx);
     while (stop_working == false) {
-        if (
-            dealer_cv.wait_for(
-                guard,
-                std::chrono::milliseconds(dealer_waiting_time_ms),
-                [this]() -> bool { return (dead_anchors->load() > 0); })
-            ) {
-            /* This condition is true when the lambda expression is true;
-             *   When the timeout expires the condition fis false and
-             * the execution flow wraps around the cycle checking the
-             * thread stopping condition.
-             *   Spurious notification are avoided using the lambda
-             * expression.
-             */
+        /*
+            This condition is true when the lambda expression is true;
+                When the timeout expires the condition is false and the
+            execution flow wraps around the cycle checking the thread
+            stopping condition.
+                Spurious notification are avoided using the lambda
+            expression.
+        */
+        if (dealer_cv.wait_for(guard, milliseconds(dealer_waiting_time_ms),
+                [this]() -> bool { return (dead_anchors->load() > 0); })) {
+
+            advertise_service();
+
             SOCKET new_socket = INVALID_SOCKET;
             anchor new_anchor = connect_anchor(&new_socket);
 
             if (new_socket == INVALID_SOCKET) {
-                // no anchor connected
-                continue;
+                continue; // no anchor connected
             }
 
-            // get position of newly connected anchor
             std::pair<double, double> new_anchor_position(0, 0);
             bool rs = context->get_anchor_position(
                 new_anchor.get_mac(), new_anchor_position);
 
             if (rs == true) {
-                // newly connected anchor found in configuration
                 new_anchor.set_position(new_anchor_position);
 
                 connections->add_connected_anchor(new_socket, new_anchor);
@@ -146,12 +169,24 @@ dealer::service()
                     "anchor connected: ", new_anchor.str());
             }
             else {
-                // newly connected anchor not found in configuration
-                debuglog("dealer::service: "
-                    "unknown anchor " + new_anchor.str(), " closing connection");
+                debuglog("dealer::service: " "unknown anchor " + new_anchor.str(), 
+                    " closing connection.");
                 close_connection(&new_socket);
             }
         }
+    }
+}
+
+void
+dealer::advertise_service()
+{
+    SOCKET udp_socket = setup_for_broadcasting();
+
+    string msg = "9pointspls";
+    int adverts_number = dealer_upd_advers_num;
+    while (adverts_number > 0) {
+        bcast_udp_message(msg.data(), (uint32_t)msg.size(), ADVERTS_PORT, udp_socket);
+        adverts_number--;
     }
 }
 
@@ -172,16 +207,14 @@ dealer::connect_anchor(SOCKET* rsocket)
     int    attempts = dealer_max_accept_attempts;
     SOCKET new_socket = INVALID_SOCKET;
     while (attempts > 0 && new_socket == INVALID_SOCKET) {
-        new_socket =
-            ::accept(listening_socket, (sockaddr*)&anchor_sa, (int*)&anchor_sa_size);
+        new_socket = ::accept(listening_socket, (sockaddr*)&anchor_sa, (int*)&anchor_sa_size);
 
         if (new_socket == INVALID_SOCKET) {
             int wsa_err = WSAGetLastError();
 
             switch (wsa_err) {
             case WSAEWOULDBLOCK:
-                std::this_thread::sleep_for(
-                    std::chrono::milliseconds(dealer_waiting_time_ms));
+                sleep_for(milliseconds(dealer_waiting_time_ms));
                 attempts--;
                 break;
             case WSAECONNRESET:
@@ -200,10 +233,19 @@ dealer::connect_anchor(SOCKET* rsocket)
         return anchor();
     }
 
-    // get anchor mac
-    wARPtable arp_table;
+    // get anchor ip
     ip_addr  new_ip(anchor_sa.sin_addr.s_addr);
-    mac_addr new_mac = arp_table.get_mac_from_ip(new_ip);
+
+    // get anchor mac
+    std::vector<uint8_t> mac;
+    uint32_t rval = read_sized_message(mac, new_socket);
+    if (rval != mac_addr::mac_length) {
+        close_connection(&new_socket);
+        return anchor();
+    }
+    mac_addr new_mac;
+    for (int i = 0; i < mac_addr::mac_length; i++)
+        new_mac[i] = mac[i];
 
     set_keepalive_option(new_socket);
     set_non_blocking_socket(new_socket);
