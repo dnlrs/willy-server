@@ -4,7 +4,6 @@
 
 #include "cfg.h"
 #include "collector.h"
-#include "packet.h"
 #include "sized_buffer.h"
 #include "sync_queue.h"
 #include <atomic>

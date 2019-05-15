@@ -4,7 +4,9 @@
 
 #include "ip_addr.h"
 #include "mac_addr.h"
+#include "fingerprint.h"
 #include "utils.h"
+
 #include <cstdint> /* for uint64_t */
 #include <sstream>
 #include <winsock2.h>
@@ -22,7 +24,8 @@ public:
         mac_addr in_device_mac    = mac_addr(),
         mac_addr in_anchor_mac    = mac_addr(),
         std::string in_ssid = "",
-        std::string in_hash = "") :
+        std::string in_hash = "",
+        fingerprint in_fp = { 0 }) :
             channel(in_channel),
             rssi(in_rssi),
             sequence_ctrl(in_sequence_ctrl),
@@ -31,7 +34,8 @@ public:
             device_mac(in_device_mac),
             anchor_mac(in_anchor_mac),
             ssid(in_ssid),
-            hash(in_hash) {}
+            hash(in_hash),
+            fp(in_fp) {}
 
     bool operator<(const packet& other) const { return hash < other.hash; }
 
@@ -64,6 +68,8 @@ public:
 
     std::string ssid;
     std::string hash;
+
+    fingerprint fp;
 };
 
 #endif // !PACKET_H_INCLUDED

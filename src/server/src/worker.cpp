@@ -1,11 +1,16 @@
 #include "logger.h"
 #include "mac_addr.h"
+#include "packet.h"
 #include "worker.h"
 
+using std::vector;
+using std::string;
+using std::shared_ptr;
+
 worker::worker(
-    std::shared_ptr<cfg::configuration> context_in,
-    std::shared_ptr<sync_queue> shared_raw_buffers,
-    std::shared_ptr<collector>  collector_in) :
+    shared_ptr<cfg::configuration> context_in,
+    shared_ptr<sync_queue> shared_raw_buffers,
+    shared_ptr<collector>  collector_in) :
         context(context_in),
         raw_packets_queue(shared_raw_buffers),
         packet_collector(collector_in) {}
@@ -71,36 +76,84 @@ worker::deserialize(sized_buffer buffer)
 
     uint32_t channel       = ntohl(pmsg[0]); // channel
     int32_t  rssi          = ntohl(pmsg[1]); // rssi
-    uint32_t sequence_ctrl = ntohl(pmsg[2]); // sequence control
-    uint64_t timestamp     = ntohl(pmsg[3]); // timestamp
-    int32_t  ssid_length   = ntohl(pmsg[4]); // ssid length
+    uint64_t timestamp     = ntohl(pmsg[2]); // timestamp
+    uint32_t sequence_ctrl = ntohl(pmsg[3]); // sequence control
+    uint32_t ssid_num      = ntohl(pmsg[4]); // number of SSIDs
+    
+    fingerprint pfp = { 0 };
 
-    uint8_t* pmsg_byte = (uint8_t*)&pmsg[5];
+    pfp.tag_presence = ntohl(pmsg[5]); // tags presence
+    ((uint32_t*) &(pfp.supported_rates))[0] = ntohl(pmsg[6]); // supported rates 1
+    ((uint32_t*) &(pfp.supported_rates))[1] = ntohl(pmsg[7]); // supported rates 2
 
-    // device mac
+    uint8_t* pmsg_byte = (uint8_t*) &pmsg[8];
+    
+    /* ht capabilities */
+    if (is_tag_set(TAG_HT_CAPABILITY, &pfp.tag_presence)) {
+        uint8_t* dst = (uint8_t*) &(pfp.ht_capability_info);
+        for (int i = 0; i < HT_CAPABILITIES_LEN; i++)
+            *dst++ = *pmsg_byte++;
+    }
+
+    /* extended capabilities */
+    if (is_tag_set(TAG_EXTENDED_CAPABILITIES, &pfp.tag_presence)) {
+        uint8_t* dst = (uint8_t*) &(pfp.ext_extended_capabilities);
+        for (int i = 0; i < EXT_CAPABILITIES_LEN; i++)
+            *dst++ = *pmsg_byte++;
+    }
+
+    /* interworking */
+    if (is_tag_set(TAG_INTERWORKING, &pfp.tag_presence)) {
+        pfp.iw_interworking = *pmsg_byte++;
+    }
+
+    /* Multi Band */
+    if (is_tag_set(TAG_MULTI_BAND, &pfp.tag_presence)) {
+        pfp.multi_band_id      = *pmsg_byte++;
+        pfp.multi_band_channel = *pmsg_byte++;
+    }
+
+    /* VHT Capabilities */
+    if (is_tag_set(TAG_VHT_CAPABILITY, &pfp.tag_presence)) {
+        uint8_t* dst = (uint8_t*) &(pfp.vht_capabilities_info);
+        for (int i = 0; i < VHT_CAPABILITIES_LEN; i++)
+            *dst++ = *pmsg_byte++;
+    }
+
+    /* device mac */
     mac_addr device_mac;
     for (int i = 0; i < mac_addr::mac_length; i++) {
-        device_mac[i] = *pmsg_byte;
-        pmsg_byte++;
+        device_mac[i] = *pmsg_byte++;
     }
 
-    // packet hash
-    char raw_hash[packet::md5_hash_length + 1];
-    for (int i = 0; i < packet::md5_hash_length; i++) {
-        raw_hash[i] = *pmsg_byte;
-        pmsg_byte++;
-    }
-    raw_hash[packet::md5_hash_length] = '\0';
-    std::string hash(raw_hash);
+    /*
+        SSIDs
+            |len|"ssid-name"|
+    */
+    for (int i = 0; i < ssid_num; i++) {
+        uint8_t ssid_len = *pmsg_byte++;
+        
+        string ssid((char*) pmsg_byte, ssid_len);
+        pmsg_byte += ssid_len;
 
-    // ssid
-    char raw_ssid[packet::max_ssid_length + 1];
-    for (int32_t i = 0; i < ssid_length; i++) {
-        raw_ssid[i] = *pmsg_byte;
-        pmsg_byte++;
+        pfp.ssid_list.push_back(ssid);
     }
-    raw_ssid[ssid_length] = '\0';
-    std::string ssid(raw_ssid);
+
+    /* hash */
+    string hash((char*) pmsg_byte, packet::md5_hash_length);
+    pmsg_byte += packet::md5_hash_length;
+
+    if (((uint8_t*)pmsg_byte - (uint8_t*)buffer.msg.data()) != buffer.msg_size )
+        debuglog("[deserialize] incongruent buffer END!");
+    
+
+    /* for compatibility with old interface */
+    std::string ssid;
+    int ssid_length = 0;
+    if (pfp.ssid_list.size() > 0) {
+        ssid = pfp.ssid_list[0];
+        ssid_length = ssid.size();
+    }
 
 #ifdef _DEBUG
 

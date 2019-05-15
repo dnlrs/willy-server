@@ -35,6 +35,9 @@
     <ClInclude Include="include\ip_addr.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\packet_ieee80211.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\utils.cpp">
@@ -44,6 +47,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\mac_addr.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\packet_ieee80211.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
