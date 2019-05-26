@@ -85,8 +85,7 @@ collector::flush()
                 }
                 catch (db::db_exception& dbe) {
                     if (dbe.why() == db::db_exception::type::error)
-                        throw coll_exception("collector::store_data: "
-                            "failed, persistence layer fail\n" + std::string(dbe.what()));
+                        debuglog("collector::store_data: persistence layer fail, device ignored");
                 }
 
                 /* remove this centroid and update iterator */
@@ -154,8 +153,7 @@ collector::store_data(
     }
     catch (db::db_exception& dbe) {
         if (dbe.why() == db::db_exception::type::error)
-            throw coll_exception("collector::store_data: "
-                "failed, persistence layer fail\n" + std::string(dbe.what()));
+            debuglog("collector::store_data: persistence layer fail, packet ignored");
     }
 
     std::unique_lock<std::mutex> guard(devices_lock);
