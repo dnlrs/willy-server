@@ -1,5 +1,7 @@
 #include "ips.h"
+
 #include <cassert>
+#include <limits>
 
 double
 ips::get_distance_from_rssi(int rssi, double multiplier) const
@@ -109,4 +111,57 @@ ips::get_centroid(const std::vector<point2d> points) const
     }
 
     return point2d((sum_x / K), (sum_y / K));
+}
+
+boundaries 
+ips::create_boundaries(
+    const std::vector<sample> measurements) const
+{   
+    boundaries rval = { 0 };
+    rval.left  = std::numeric_limits<double>::max(); // min x
+    rval.upper = std::numeric_limits<double>::min(); // max y
+    rval.right = std::numeric_limits<double>::min(); // max x
+    rval.lower = std::numeric_limits<double>::max(); // min y
+
+    for (auto ms : measurements) {
+        // left boundary
+        if (ms.anchor_position.x < rval.left)
+            rval.left = ms.anchor_position.x;
+
+        // upper boundary
+        if (ms.anchor_position.y > rval.upper)
+            rval.upper = ms.anchor_position.y;
+
+        // right boundary
+        if (ms.anchor_position.x > rval.right)
+            rval.right = ms.anchor_position.x;
+
+        // lower boundary
+        if (ms.anchor_position.y < rval.lower)
+            rval.lower = ms.anchor_position.y;
+    }
+
+    return rval;
+}   
+
+bool 
+ips::is_within_boundaries(point2d point, boundaries limits) const
+{
+    // left
+    if (point.x < limits.left)
+        return false;
+
+    // upper
+    if (point.y > limits.upper)
+        return false;
+
+    // right
+    if (point.x > limits.right)
+        return false;
+
+    // lower
+    if (point.y < limits.lower)
+        return false;
+
+    return true;
 }

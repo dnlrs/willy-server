@@ -9,6 +9,14 @@
 #include <cmath>
 #include <vector>
 
+typedef struct s_boundaries
+{
+    double left;
+    double upper;
+    double right;
+    double lower;
+} boundaries;
+
 /* Indoor Positioning System - IPS */
 class ips
 {
@@ -25,8 +33,15 @@ public:
 
         if (anchors_nr == 1)
             return unilateration(measurements[0]);
+        
+        /* check if point is within boundaries */
+        boundaries limits = create_boundaries(measurements);
+        point2d rval = multilateration(measurements);
 
-        return multilateration(measurements);
+        if (is_within_boundaries(rval, limits) == false)
+            throw ips_exception("ips::localize_device: out of boundaries device");
+
+        return rval;
     }
 
     /* Returns the centroid and the number of points used to calculate it
@@ -67,6 +82,10 @@ private:
     /* Returns the centroid of a set of points */
     point2d get_centroid(const std::vector<point2d> points) const;
 
+    boundaries create_boundaries(
+        const std::vector<sample> measurements) const;
+    
+    bool is_within_boundaries(point2d point, boundaries limits) const;
 private:
     double A = -55;
     double n = 2.0; // reference

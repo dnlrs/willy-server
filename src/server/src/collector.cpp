@@ -40,8 +40,13 @@ collector::submit_packet(packet new_packet)
         auto readings = packets.extract(new_packet);
 
         guard.unlock();
-        device new_device = process_readings(new_packet, readings.mapped());
-        store_data(new_packet, new_device);
+        try {
+            device new_device = process_readings(new_packet, readings.mapped());
+            new_device.fp = new_packet.fp; // store device fingerprint
+            debuglog("[device]", new_device.str());
+            store_data(new_packet, new_device);
+        }
+        catch (ips_exception& ipse) {} /* packet and device ignored because device out of bounds */
         guard.lock();
     }
 
@@ -78,7 +83,7 @@ collector::flush()
                     pos->second.first.x,     /* x position */
                     pos->second.first.y);    /* y position */
 
-                debuglog("[device]", new_device.str());
+                //debuglog("[device]", new_device.str());
 
                 try {
                     db_storage.add_device(new_device);
