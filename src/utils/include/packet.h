@@ -25,7 +25,7 @@ public:
         mac_addr in_anchor_mac    = mac_addr(),
         std::string in_ssid = "",
         std::string in_hash = "",
-        fingerprint in_fp = { 0 }) :
+        fingerprint in_fp = fingerprint()) :
             channel(in_channel),
             rssi(in_rssi),
             sequence_ctrl(in_sequence_ctrl),
@@ -42,14 +42,15 @@ public:
     std::string str()
     {
         return std::string(
-            "device mac: " + device_mac.str() +
-            " rssi: "      + std::to_string(rssi) +
-            " timestamp: " + std::to_string(timestamp) +
-            (anchor_mac.is_valid() ? (" anchor mac: " + anchor_mac.str()) : "") +
-            ((ssid_length > 0)     ? (" ssid: " + ssid) : "") +
-            " channel: "       + std::to_string(channel) +
-            " sequence_ctrl: " + std::to_string(sequence_ctrl) +
-            " hash: "          + hash);
+            "\n\tdevice mac: " + device_mac.str() +
+            "\n\trssi: "      + std::to_string(rssi) +
+            "\n\ttimestamp: " + std::to_string(timestamp) +
+            (anchor_mac.is_valid() ? ("\n\tanchor mac: " + anchor_mac.str()) : "") +
+            ((ssid_length > 0)     ? ("\n\tssid: " + ssid) : "") +
+            "\n\tchannel: "       + std::to_string(channel) +
+            "\n\tsequence_ctrl: " + std::to_string(sequence_ctrl) +
+            "\n\thash: "          + hash +
+            "\n\tfingerprint: "  + fp.str());
     }
 
 public:

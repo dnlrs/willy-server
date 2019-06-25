@@ -9,7 +9,19 @@
 
 #define FINGERPRINT_LEN (4+8+HT_CAPABILITIES_LEN+EXT_CAPABILITIES_LEN+1+2+VHT_CAPABILITIES_LEN)
 
-typedef struct s_fingerprint {
+class fingerprint {
+
+
+public:
+    fingerprint();
+
+    uint32_t serialize(uint8_t* buffer);
+    fingerprint& deserialize(uint8_t* buffer, uint32_t buffer_len);
+
+    std::string str() const;
+
+public:
+
     /* aggregated info, always present */
     uint32_t tag_presence;    // Bit flags indicating if element TAGs presence.
     uint64_t supported_rates; // Bit flags indicating supported rates.
@@ -38,8 +50,8 @@ typedef struct s_fingerprint {
 
     /* ssid list */
     std::vector<std::string> ssid_list;
+};
 
-} fingerprint;
 
 
 #endif // !FINGERPRINT_H_INCLUDED

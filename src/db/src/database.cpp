@@ -1,6 +1,9 @@
 #include "database.h"
 #include "db_exception.h"
 #include "packet.h"
+#include "fingerprint.h"
+#include "device.h"
+
 #include <iostream>
 #include <cstdint> /* for uint64_t */
 #include <fstream>
@@ -40,6 +43,7 @@ db::database::open(bool reset) {
                     timestamp   INTEGER NOT NULL,       \
                     pos_x       REAL NOT NULL,          \
                     pos_y       REAL NOT NULL,          \
+                    fingerprint BLOB,                   \
                     PRIMARY KEY (mac, timestamp));");
 
     char* errmsg;
@@ -136,13 +140,17 @@ db::database::add_device(device device_in)
         throw db_exception("no db connection"); // no db connection
 
     std::string db_errmsg;
-    std::string sql = "INSERT INTO devices(mac, timestamp, pos_x, pos_y) \
-                       VALUES (?, ?, ?, ?);";
+    std::string sql = "INSERT INTO devices(mac, timestamp, pos_x, pos_y, fingerprint) \
+                       VALUES (?, ?, ?, ?, ?);";
 
     sqlite3_stmt *stmt = NULL;
     int result;
 
     db_errmsg.clear();
+
+    // serialize device fingerprint
+    uint8_t blob[FINGERPRINT_LEN + 10 * 32];
+    int blob_len = device_in.fp.serialize(&(blob[0]));
 
     // prepare statement
     result = sqlite3_prepare_v2(db, sql.c_str(), (int)sql.length(), &stmt, NULL);
@@ -155,7 +163,8 @@ db::database::add_device(device device_in)
     if (sqlite3_bind_int64(stmt, 1, device_in.mac.get()) ||
         sqlite3_bind_int64(stmt, 2, device_in.timestamp) ||
         sqlite3_bind_double(stmt, 3, device_in.position.x) ||
-        sqlite3_bind_double(stmt, 4, device_in.position.y)) {
+        sqlite3_bind_double(stmt, 4, device_in.position.y) ||
+        sqlite3_bind_blob(stmt, 5, &(blob[0]), blob_len, SQLITE_STATIC)) {
         db_errmsg = std::string(sqlite3_errmsg(db));
         sqlite3_finalize(stmt);
         throw db_exception(db_errmsg.c_str());

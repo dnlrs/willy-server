@@ -5,6 +5,8 @@
 #include "utils.h"
 #include "mac_addr.h"
 #include "point2d.h"
+#include "fingerprint.h"
+
 #include <cstdint>
 #include <string>
 
@@ -22,9 +24,10 @@ public:
     std::string str()
     {
         return std::string(
-            "mac: "        + mac.str() +
-            " timestamp: " + std::to_string(timestamp) +
-            " position: "  + position.str());
+            "\n\tmac: "        + mac.str() +
+            "\n\ttimestamp: " + std::to_string(timestamp) +
+            "\n\tposition: "  + position.str() +
+            "\n\tfingerprint " +fp.str());
     }
 
     bool operator<(const device& other) const { return mac < other.mac; }
@@ -34,6 +37,8 @@ public:
     uint64_t timestamp;
 
     point2d position;
+
+    fingerprint fp;
 };
 
 #endif // !DEVICE_H_INCLUDED

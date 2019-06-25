@@ -72,6 +72,7 @@ worker::service()
 packet
 worker::deserialize(sized_buffer buffer)
 {
+    /* uint32_t* mode */
     uint32_t* pmsg = (uint32_t*)buffer.msg.data();
 
     uint32_t channel       = ntohl(pmsg[0]); // channel
@@ -80,24 +81,29 @@ worker::deserialize(sized_buffer buffer)
     uint32_t sequence_ctrl = ntohl(pmsg[3]); // sequence control
     uint32_t ssid_num      = ntohl(pmsg[4]); // number of SSIDs
     
-    fingerprint pfp = { 0 };
+    fingerprint pfp;
 
     pfp.tag_presence = ntohl(pmsg[5]); // tags presence
-    ((uint32_t*) &(pfp.supported_rates))[0] = ntohl(pmsg[6]); // supported rates 1
-    ((uint32_t*) &(pfp.supported_rates))[1] = ntohl(pmsg[7]); // supported rates 2
 
-    uint8_t* pmsg_byte = (uint8_t*) &pmsg[8];
+    /* uint8_t* mode */
+    uint8_t* pmsg_byte = (uint8_t*) &pmsg[6];
+    uint8_t* dst = nullptr;
+
+    /* supported rates */
+    dst = (uint8_t*)&pfp.supported_rates;
+    for (int i = 0; i < 8; i++)
+        *dst++ = *pmsg_byte++;
     
     /* ht capabilities */
     if (is_tag_set(TAG_HT_CAPABILITY, &pfp.tag_presence)) {
-        uint8_t* dst = (uint8_t*) &(pfp.ht_capability_info);
+        dst = (uint8_t*) &(pfp.ht_capability_info);
         for (int i = 0; i < HT_CAPABILITIES_LEN; i++)
             *dst++ = *pmsg_byte++;
     }
 
     /* extended capabilities */
     if (is_tag_set(TAG_EXTENDED_CAPABILITIES, &pfp.tag_presence)) {
-        uint8_t* dst = (uint8_t*) &(pfp.ext_extended_capabilities);
+        dst = (uint8_t*) &(pfp.ext_extended_capabilities);
         for (int i = 0; i < EXT_CAPABILITIES_LEN; i++)
             *dst++ = *pmsg_byte++;
     }
@@ -115,7 +121,7 @@ worker::deserialize(sized_buffer buffer)
 
     /* VHT Capabilities */
     if (is_tag_set(TAG_VHT_CAPABILITY, &pfp.tag_presence)) {
-        uint8_t* dst = (uint8_t*) &(pfp.vht_capabilities_info);
+        dst = (uint8_t*) &(pfp.vht_capabilities_info);
         for (int i = 0; i < VHT_CAPABILITIES_LEN; i++)
             *dst++ = *pmsg_byte++;
     }
@@ -157,9 +163,11 @@ worker::deserialize(sized_buffer buffer)
 
 #ifdef _DEBUG
 
+    debuglog("----- FINGERPRINT ", pfp.str());
+
     packet rval(channel, rssi, sequence_ctrl,
         ssid_length, timestamp,
-        device_mac, mac_addr(), ssid, hash);
+        device_mac, mac_addr(), ssid, hash, pfp);
 
     debuglog("[packet]", rval.str());
     return rval;
