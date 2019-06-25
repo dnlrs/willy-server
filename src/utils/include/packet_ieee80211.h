@@ -5,6 +5,7 @@
 #define PACKET_IEEE80211_H_INCLUDED
 #pragma once
 
+#include <cstdint>
 #include <map>
 #include <string>
 

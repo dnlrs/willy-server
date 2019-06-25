@@ -137,8 +137,8 @@ std::map<int, uint64_t> sr_compacted = {
     { 0xC8, 0x0000000004000000 },
     { 0xE0, 0x0000000002000000 },
     { 0xEC, 0x0000000001000000 },
-    { 0xFF, 0xffffffffffffffff },
-    { 0,    0x0000000000000000 }
+    { 0xFF, 0x0000000000800000 },
+    { 0,    0x0000000000400000 }
 };
 
 
@@ -149,7 +149,7 @@ add_tag(int element_id, uint32_t* tag_presence)
         return false;
     }
 
-    *tag_presence &= tags_compacted.at(element_id);
+    *tag_presence |= tags_compacted.at(element_id);
     return true;
 }
 
