@@ -6,6 +6,14 @@ Anchor macs:
 30:AE:A4:3B:A2:F8
 30:AE:A4:7A:F9:10
 
+    <anchor>
+        <mac>30:ae:a4:1c:38:50</mac>
+			<position>
+				<x>10.000</x>
+				<y>5.000</y>
+			</position>
+        </anchor>
+
 Configuration file format:
 ```xml
 <configuration>

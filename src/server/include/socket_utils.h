@@ -4,6 +4,8 @@
 
 #include <WinSock2.h>
 
+#include <vector>
+
 // no activity timeout (ms) until the first keepalive packet is sent (1 min)
 constexpr unsigned long int default_keepalive_time_ms = 1000 * 60;
 // inverval between keepalive packets if no response received (1 sec)

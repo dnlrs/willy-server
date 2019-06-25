@@ -72,6 +72,8 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <None Include="config\info.md" />
+    <None Include="config\server.conf" />
     <None Include="README.md" />
     <None Include="SETUP_VS_PROJECT.md" />
   </ItemGroup>

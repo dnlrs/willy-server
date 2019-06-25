@@ -5,8 +5,10 @@
 #include "anchor.h"
 #include "mac_addr.h"
 #include "winsock2.h"
+
 #include <map>
 #include <mutex>
+#include <vector>
 
 /*
  * Forward declaration so it can be friend and access private members.

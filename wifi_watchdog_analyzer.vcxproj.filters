@@ -13,6 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav</Extensions>
     </Filter>
+    <Filter Include="Config">
+      <UniqueIdentifier>{f6581454-7105-46f1-9e7c-0aeb58fec6dc}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\wifi_watchdog_analyzer.cpp">
@@ -33,6 +36,12 @@
     </None>
     <None Include="SETUP_VS_PROJECT.md">
       <Filter>Doc Files</Filter>
+    </None>
+    <None Include="config\server.conf">
+      <Filter>Config</Filter>
+    </None>
+    <None Include="config\info.md">
+      <Filter>Config</Filter>
     </None>
   </ItemGroup>
 </Project>

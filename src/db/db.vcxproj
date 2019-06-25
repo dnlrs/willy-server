@@ -23,6 +23,9 @@
     <ProjectReference Include="..\log\log.vcxproj">
       <Project>{3b6ce533-210e-43e4-a884-a6826c8dacbe}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\stat\stat.vcxproj">
+      <Project>{85e021bb-5bed-40c9-b58b-42227041144c}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\utils\utils.vcxproj">
       <Project>{9c21b822-3fbb-4a85-90ce-0812c07f6217}</Project>
     </ProjectReference>
